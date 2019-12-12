@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <title>
+        如何设计与实现WebCosole - WeroNG
+      </title>
+    <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  
+  <meta name="theme-color" content="#000000" />
+  
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <meta name="description" content="1. 调研 前端：了解到有一个非常优秀的开源web终端库： xterm.js , 使用起来也比较简单。 后端：使用 go 语言实现，因为 go 语言拥有许多优秀的开源ssh库，能够" />
+  <meta name="generator" content="Hugo 0.59.1 with theme pure" />
+  <title>如何设计与实现WebCosole - WeroNG</title>
+  
+
+  <link rel="stylesheet" href="https://wangzeping722.github.io/css/style.css">
+  <link rel="stylesheet" href="https://cdn.staticfile.org/highlight.js/9.15.10/styles/github.min.css">
+  <meta property="og:title" content="如何设计与实现WebCosole" />
+<meta property="og:description" content="1. 调研 前端：了解到有一个非常优秀的开源web终端库： xterm.js , 使用起来也比较简单。 后端：使用 go 语言实现，因为 go 语言拥有许多优秀的开源ssh库，能够" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://wangzeping722.github.io/2019/12/how-to-write-webconsole/" />
+<meta property="article:published_time" content="2019-12-04T09:13:51+08:00" />
+<meta property="article:modified_time" content="2019-12-04T09:13:51+08:00" />
+<meta itemprop="name" content="如何设计与实现WebCosole">
+<meta itemprop="description" content="1. 调研 前端：了解到有一个非常优秀的开源web终端库： xterm.js , 使用起来也比较简单。 后端：使用 go 语言实现，因为 go 语言拥有许多优秀的开源ssh库，能够">
+
+
+<meta itemprop="datePublished" content="2019-12-04T09:13:51&#43;08:00" />
+<meta itemprop="dateModified" content="2019-12-04T09:13:51&#43;08:00" />
+<meta itemprop="wordCount" content="827">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="如何设计与实现WebCosole"/>
+<meta name="twitter:description" content="1. 调研 前端：了解到有一个非常优秀的开源web终端库： xterm.js , 使用起来也比较简单。 后端：使用 go 语言实现，因为 go 语言拥有许多优秀的开源ssh库，能够"/>
+
+  <!--[if lte IE 9]>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+    <![endif]-->
+
+  <!--[if lt IE 9]>
+      <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+  </head>
+  <body class="main-center" itemscope itemtype="http://schema.org/WebPage"><header class="header" itemscope itemtype="http://schema.org/WPHeader">
+    <div class="slimContent">
+      <div class="navbar-header">
+        <div class="profile-block text-center">
+          <a id="avatar" href="https://github.com/wangzeping722" target="_blank">
+            <img class="img-circle img-rotate" src="https://wangzeping722.github.io/avatar.png" width="200" height="200">
+          </a>
+          <h2 id="name" class="hidden-xs hidden-sm">王XX</h2>
+          <h3 id="title" class="hidden-xs hidden-sm hidden-md">Gopher</h3>
+          <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i>Shanghai, China</small>
+        </div><div class="search" id="search-form-wrap">
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i
+                        class="icon icon-search"></i></button>
+            </span>
+        </div>
+        <div class="ins-search">
+            <div class="ins-search-mask"></div>
+            <div class="ins-search-container">
+                <div class="ins-input-wrapper">
+                    <input type="text" class="ins-search-input" placeholder="想要查找什么..."
+                        x-webkit-speech />
+                    <button type="button" class="close ins-close ins-selectable" data-dismiss="modal"
+                        aria-label="Close"><span aria-hidden="true">×</span></button>
+                </div>
+                <div class="ins-section-wrapper">
+                    <div class="ins-section-container"></div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+        <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+      </div>
+      <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+        <ul class="nav navbar-nav main-nav">
+            <li class="menu-item menu-item-home">
+                <a href="/">
+                    <i class="icon icon-home-fill"></i>
+                  <span class="menu-title">Home</span>
+                </a>
+            </li>
+            <li class="menu-item menu-item-archives">
+                <a href="/posts">
+                    <i class="icon icon-archives-fill"></i>
+                  <span class="menu-title">Archives</span>
+                </a>
+            </li>
+            <li class="menu-item menu-item-categories">
+                <a href="/categories">
+                    <i class="icon icon-folder"></i>
+                  <span class="menu-title">Categories</span>
+                </a>
+            </li>
+            <li class="menu-item menu-item-tags">
+                <a href="/tags">
+                    <i class="icon icon-tags"></i>
+                  <span class="menu-title">Tags</span>
+                </a>
+            </li>
+            <li class="menu-item menu-item-about">
+                <a href="/about">
+                    <i class="icon icon-cup-fill"></i>
+                  <span class="menu-title">About</span>
+                </a>
+            </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content"><p>好好学习，天天向上~</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+      <div class="widget">
+    <h3 class="widget-title"> 分类</h3>
+    <div class="widget-body">
+        <ul class="category-list">
+        </ul>
+    </div>
+</div>
+      <div class="widget">
+    <h3 class="widget-title"> 标签</h3>
+    <div class="widget-body">
+        <ul class="tag-list">
+            
+        </ul>
+
+    </div>
+</div>
+      
+<div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+        <ul class="recent-post-list list-unstyled no-thumbnail">
+            <li>
+                <div class="item-inner">
+                    <p class="item-title">
+                        <a href="https://wangzeping722.github.io/2019/12/how-to-write-webconsole/" class="title">如何设计与实现WebCosole</a>
+                    </p>
+                    <p class="item-date">
+                        <time datetime="2019-12-04 09:13:51 &#43;0800 CST" itemprop="datePublished">2019-12-04</time>
+                    </p>
+                </div>
+            </li>
+        </ul>
+    </div>
+</div>
+  </div>
+</aside>
+
+    
+    
+  <aside class="sidebar sidebar-toc collapse" id="collapseToc" itemscope itemtype="http://schema.org/WPSideBar">
+    <div class="slimContent">
+      <nav id="toc" class="article-toc">
+        <h3 class="toc-title">文章目录</h3>
+        <div class="toc-content always-active"><nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#1-调研">1. 调研</a></li>
+<li><a href="#2-原理">2. 原理</a></li>
+<li><a href="#3-问题解决以及服务端实现">3. 问题解决以及服务端实现</a>
+<ul>
+<li><a href="#3-1-如何获取-ssh-code">3.1 如何获取 ssh code</a></li>
+<li><a href="#3-2-如何将-websocket-和-ssh-这两个协议的消息进行转换">3.2 如何将 websocket 和 ssh 这两个协议的消息进行转换</a></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+        </div>
+      </nav>
+    </div>
+  </aside>
+<main class="main" role="main"><div class="content">
+  <article id="-" class="article article-type-" itemscope
+    itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      <h1 itemprop="name">
+  <a
+    class="article-title"
+    href="/2019/12/how-to-write-webconsole/"
+    >如何设计与实现WebCosole</a
+  >
+</h1>
+
+      <div class="article-meta">
+        <span class="article-date">
+  <i class="icon icon-calendar-check"></i>
+<a href="https://wangzeping722.github.io/2019/12/how-to-write-webconsole/" class="article-date">
+  <time datetime="2019-12-04 09:13:51 &#43;0800 CST" itemprop="datePublished">2019-12-04</time>
+</a>
+</span>
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2019/12/how-to-write-webconsole/#comments"
+            class="article-comment-link">评论</a></span>
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计:827字</span>
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长:2分 </span>
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+
+<h3 id="1-调研">1. 调研</h3>
+
+<p>前端：了解到有一个非常优秀的开源web终端库： <strong>xterm.js</strong> , 使用起来也比较简单。</p>
+
+<p>后端：使用 go 语言实现，因为 go 语言拥有许多优秀的开源ssh库，能够满足我们的需求。</p>
+
+<p>难点：</p>
+
+<pre><code>1. 如何与 cf(cloud foundry) 进行交互得到 `ssh code` ？
+2. 如何把 ssh 命令行转换成 websocket 通讯, 并输出到 xterm.js 中？
+3. 如何控制访问权限？
+</code></pre>
+
+<h3 id="2-原理">2. 原理</h3>
+
+<p><img src="webconsole1.png" alt="webconsole原理图" /></p>
+
+<p>​   1. 浏览器向服务器发起 websocket 请求</p>
+
+<p>​   2. 服务器通过 ssh 连接到 cf 容器</p>
+
+<p>​   3. 连接建立，服务器负责转发消息</p>
+
+<p>在后端和浏览器之间建立websocket连接后，将用户在浏览器中输入的命令通过 websocket 协议发送到后端，后端使用 ssh 协议将命令输入到容器ssh进程的 stdin，命令执行后，再从 stdout 中读取输出，通过websocket协议返回浏览器显示给用户，达到交互的目的。</p>
+
+<h3 id="3-问题解决以及服务端实现">3. 问题解决以及服务端实现</h3>
+
+<p>在前两个步骤中，我已经通过分析把原理和难点梳理清楚了，目前就需要着手解决这些问题。</p>
+
+<h4 id="3-1-如何获取-ssh-code">3.1 如何获取 ssh code</h4>
+
+<p>cf 有一个自带的命令 <code>cf ssh-code</code> 能够获取连接到容器用的 <code>ssh code</code>，但是我并没有在 cf 开源的 go 语言客户端 <code>cfclient</code> 中发现相关的 API，所以我去查看了 cf cli 的源码，并在里面发现了 <strong>cc</strong> 暴露出来的接口，有了这个接口之后，就能够通过 http 请求的方式获取 <code>ssh-code</code>。由于 <code>cfclient</code> 中并没有相关的代码，所以不得不自己实现一些方来获取 <code>ssh-code</code>, 于是这个问题解决了。</p>
+
+<h4 id="3-2-如何将-websocket-和-ssh-这两个协议的消息进行转换">3.2 如何将 websocket 和 ssh 这两个协议的消息进行转换</h4>
+
+<p><strong>连接建立</strong>：</p>
+
+<p><img src="webconsole2.png" alt="" /></p>
+
+<pre><code class="language-go">func WS(c *gin.Context) {
+	// 初始化websocket连接
+	upgrader := websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+	}
+	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	defer ws.Close()
+  
+	// 初始化ssh连接
+	cl, _ := c.Get(&quot;claims&quot;)
+	s, _ := c.Get(&quot;session&quot;)
+	claims := cl.(*utils.Claims)
+	session := s.(*utils.Session)
+
+	sshShell := utils.SSHShellSession{
+		Node: utils.Node{
+			Host: claims.Host,
+			Port: claims.Port,
+		},
+	}
+
+	var wsBuff WebSocketBufferWriter
+	sshShell.StdoutPipe = &amp;wsBuff
+	err = sshConn.Connect(username, password)
+	defer sshConn.Close()
+	defer wsBuff.Flush(websocket.TextMessage, ws)
+	......
+  ......
+}
+</code></pre>
+
+<p><strong>连接保持：</strong></p>
+
+<pre><code class="language-go">func WS(c *gin.Context) {
+  ......
+  ......
+	done := make(chan bool, 3)
+	setDone := func() { done &lt;- true }
+
+	// 数据转换：websocket ----&gt; SSH
+	writeMessageToSSHServer := func(wc io.WriteCloser) {
+		defer setDone()
+		for {
+			// 从websocket读取数据
+			msgType, p, err := ws.ReadMessage()
+
+			if err = DispatchMessage(sshShell.Session, msgType, p, wc); err != nil {
+				log.Println(&quot;Error: error write data to ssh server:&quot;, err)
+				return
+			}
+		}
+	}
+
+	stopper := make(chan bool)
+	// 数据转换：SSH ----&gt; websocket
+	writeBufferToWebSocket := func() {
+		defer setDone()
+		tick := time.NewTicker(time.Millisecond * time.Duration(utils.Config.SSH.BufferCheckerCycleTime))
+		defer tick.Stop()
+		for {
+			select {
+			case &lt;-tick.C:
+				if err := wsBuff.Flush(websocket.TextMessage, ws); err != nil {
+					log.Println(&quot;Error: error sending data via webSocket:&quot;, err)
+					return
+				}
+			case &lt;-stopper:
+				return
+			}
+		}
+	}
+
+	go writeMessageToSSHServer(sshShell.StdinPipe)
+	go writeBufferToWebSocket()
+	go func() {
+		defer setDone()
+		if err := sshShell.Session.Wait(); err != nil{
+			log.Println(&quot;ssh exist from server&quot;, err)
+		}
+	}()
+
+	&lt;-done
+	stopper &lt;- true 
+	log.Println(&quot;Info: websocket finished!&quot;)
+}
+</code></pre>
+
+<p><strong>控制访问权限</strong>：</p>
+
+<p>利用 cf 自带的权限认证机制实现。</p>
+
+    </div>
+  </article>
+<section id="comments">
+</section>
+
+</div><nav class="bar bar-footer clearfix" data-stick-bottom>
+    <div class="bar-inner">
+        <ul class="pager pull-left">
+            <li class="prev">
+                <a href="https://wangzeping722.github.io/about/" title="About"><i
+                        class="icon icon-angle-left"
+                        aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+            </li>
+            
+            <li class="toggle-toc">
+                <a class="toggle-btn collapsed" data-toggle="collapse" href="#collapseToc" aria-expanded="false"
+                    title="文章目录" role="button">
+                    <span>[&nbsp;</span><span>文章目录</span>
+                    <i class="text-collapsed icon icon-anchor"></i>
+                    <i class="text-in icon icon-close"></i>
+                    <span>]</span>
+                </a>
+            </li>
+        </ul>
+        <div class="bar-right">
+            <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter"
+                data-mobile-sites="weibo,qq,qzone"></div>
+        </div>
+    </div>
+</nav>
+</main><footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+<ul class="social-links">
+    <li><a href="https://github.com/wangzeping722" target="_blank" title="github" data-toggle=tooltip data-placement=top >
+            <i class="icon icon-github"></i></a></li>
+    <li><a href="https://wangzeping722.github.io/index.xml" target="_blank" title="rss" data-toggle=tooltip data-placement=top >
+            <i class="icon icon-rss"></i></a></li>
+</ul>
+  <div class="copyright">
+    &copy;2019  -
+    2019
+    <div class="publishby">
+        Theme by <a href="https://github.com/xiaoheiAh" target="_blank"> xiaoheiAh </a>base on<a href="https://github.com/xiaoheiAh/hugo-theme-pure" target="_blank"> pure</a>.
+    </div>
+  </div>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+   window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+<script type="text/javascript" src="https://cdn.staticfile.org/highlight.js/9.15.10/highlight.min.js"></script>
+<script type="text/javascript" src="https://cdn.staticfile.org/highlight.js/9.15.10/languages/rust.min.js"></script>
+<script type="text/javascript"
+   src="https://cdn.staticfile.org/highlight.js/9.15.10/languages/dockerfile.min.js"></script>
+<script>
+hljs.configure({
+  tabReplace: '    ', 
+  classPrefix: ''     
+                      
+})
+hljs.initHighlightingOnLoad();
+</script>
+<script type="text/javascript" src="https://wangzeping722.github.io/js/application.js"></script>
+<script type="text/javascript" src="https://wangzeping722.github.io/js/plugin.js"></script>
+<script>
+      (function (window) {
+          var INSIGHT_CONFIG = {
+              TRANSLATION: {
+                  POSTS: '文章',
+                  PAGES: '页面',
+                  CATEGORIES: '分类',
+                  TAGS: '标签',
+                  UNTITLED: '(未命名)',
+              },
+              ROOT_URL: 'https:\/\/wangzeping722.github.io\/',
+              CONTENT_URL: 'https:\/\/wangzeping722.github.io\/\/searchindex.json ',
+          };
+          window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+      })(window);
+      </script>
+<script type="text/javascript" src="https://wangzeping722.github.io/js/insight.js"></script>
+
+  </body>
+</html>
