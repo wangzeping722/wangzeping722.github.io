@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>coredns on WeroNG</title>
+    <link>https://wangzeping722.github.io/tags/coredns/</link>
+    <description>Recent content in coredns on WeroNG</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Thu, 12 Dec 2019 11:03:08 +0800</lastBuildDate>
+    
+        <atom:link href="https://wangzeping722.github.io/tags/coredns/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Coredns 启动流程分析</title>
+      <link>https://wangzeping722.github.io/2019/12/coredns-startup/</link>
+      <pubDate>Thu, 12 Dec 2019 11:03:08 +0800</pubDate>
+      
+      <guid>https://wangzeping722.github.io/2019/12/coredns-startup/</guid>
+      <description>最近在看coredns的实现，它是基于 caddy 框架实现的，充分利用了 caddy 的插件功能。由于 coredns 大多数功能都是利用插件功能来实现的，所以整个项目的代码理解</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <title>
+        Coredns 启动流程分析 - WeroNG
+      </title>
+    <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  
+  <meta name="theme-color" content="#000000" />
+  
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <meta name="description" content="最近在看coredns的实现，它是基于 caddy 框架实现的，充分利用了 caddy 的插件功能。由于 coredns 大多数功能都是利用插件功能来实现的，所以整个项目的代码理解" />
+  <meta name="generator" content="Hugo 0.59.1 with theme pure" />
+  <title>Coredns 启动流程分析 - WeroNG</title>
+  
+
+  <link rel="stylesheet" href="https://wangzeping722.github.io/css/style.css">
+  <link rel="stylesheet" href="https://cdn.staticfile.org/highlight.js/9.15.10/styles/github.min.css">
+  <meta property="og:title" content="Coredns 启动流程分析" />
+<meta property="og:description" content="最近在看coredns的实现，它是基于 caddy 框架实现的，充分利用了 caddy 的插件功能。由于 coredns 大多数功能都是利用插件功能来实现的，所以整个项目的代码理解" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://wangzeping722.github.io/2019/12/coredns-startup/" />
+<meta property="article:published_time" content="2019-12-12T11:03:08+08:00" />
+<meta property="article:modified_time" content="2019-12-12T11:03:08+08:00" />
+<meta itemprop="name" content="Coredns 启动流程分析">
+<meta itemprop="description" content="最近在看coredns的实现，它是基于 caddy 框架实现的，充分利用了 caddy 的插件功能。由于 coredns 大多数功能都是利用插件功能来实现的，所以整个项目的代码理解">
+
+
+<meta itemprop="datePublished" content="2019-12-12T11:03:08&#43;08:00" />
+<meta itemprop="dateModified" content="2019-12-12T11:03:08&#43;08:00" />
+<meta itemprop="wordCount" content="4560">
+
+
+
+<meta itemprop="keywords" content="coredns," />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Coredns 启动流程分析"/>
+<meta name="twitter:description" content="最近在看coredns的实现，它是基于 caddy 框架实现的，充分利用了 caddy 的插件功能。由于 coredns 大多数功能都是利用插件功能来实现的，所以整个项目的代码理解"/>
+
+  <!--[if lte IE 9]>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+    <![endif]-->
+
+  <!--[if lt IE 9]>
+      <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+  </head>
+  <body class="main-center" itemscope itemtype="http://schema.org/WebPage"><header class="header" itemscope itemtype="http://schema.org/WPHeader">
+    <div class="slimContent">
+      <div class="navbar-header">
+        <div class="profile-block text-center">
+          <a id="avatar" href="https://github.com/wangzeping722" target="_blank">
+            <img class="img-circle img-rotate" src="https://wangzeping722.github.io/avatar.png" width="200" height="200">
+          </a>
+          <h2 id="name" class="hidden-xs hidden-sm">王XX</h2>
+          <h3 id="title" class="hidden-xs hidden-sm hidden-md">Gopher</h3>
+          <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i>Shanghai, China</small>
+        </div><div class="search" id="search-form-wrap">
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i
+                        class="icon icon-search"></i></button>
+            </span>
+        </div>
+        <div class="ins-search">
+            <div class="ins-search-mask"></div>
+            <div class="ins-search-container">
+                <div class="ins-input-wrapper">
+                    <input type="text" class="ins-search-input" placeholder="想要查找什么..."
+                        x-webkit-speech />
+                    <button type="button" class="close ins-close ins-selectable" data-dismiss="modal"
+                        aria-label="Close"><span aria-hidden="true">×</span></button>
+                </div>
+                <div class="ins-section-wrapper">
+                    <div class="ins-section-container"></div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+        <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+      </div>
+      <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+        <ul class="nav navbar-nav main-nav">
+            <li class="menu-item menu-item-home">
+                <a href="/">
+                    <i class="icon icon-home-fill"></i>
+                  <span class="menu-title">Home</span>
+                </a>
+            </li>
+            <li class="menu-item menu-item-archives">
+                <a href="/posts">
+                    <i class="icon icon-archives-fill"></i>
+                  <span class="menu-title">Archives</span>
+                </a>
+            </li>
+            <li class="menu-item menu-item-categories">
+                <a href="/categories">
+                    <i class="icon icon-folder"></i>
+                  <span class="menu-title">Categories</span>
+                </a>
+            </li>
+            <li class="menu-item menu-item-tags">
+                <a href="/tags">
+                    <i class="icon icon-tags"></i>
+                  <span class="menu-title">Tags</span>
+                </a>
+            </li>
+            <li class="menu-item menu-item-about">
+                <a href="/about">
+                    <i class="icon icon-cup-fill"></i>
+                  <span class="menu-title">About</span>
+                </a>
+            </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content"><p>好好学习，天天向上~</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+      <div class="widget">
+    <h3 class="widget-title"> 分类</h3>
+    <div class="widget-body">
+        <ul class="category-list">
+            <li class="category-list-item"><a href="https://wangzeping722.github.io/categories/%E6%9D%82%E6%8A%80%E6%B5%85%E5%B0%9D/" class="category-list-link">杂技浅尝</a><span class="category-list-count">2</span></li>
+        </ul>
+    </div>
+</div>
+      <div class="widget">
+    <h3 class="widget-title"> 标签</h3>
+    <div class="widget-body">
+        <ul class="tag-list">
+            
+            
+            <li class="tag-list-item"><a href="https://wangzeping722.github.io/tags/coredns/" class="tag-list-link">coredns</a><span
+                    class="tag-list-count">1</span></li>
+            
+            
+            <li class="tag-list-item"><a href="https://wangzeping722.github.io/tags/ssh/" class="tag-list-link">ssh</a><span
+                    class="tag-list-count">1</span></li>
+            
+        </ul>
+
+    </div>
+</div>
+      
+<div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+        <ul class="recent-post-list list-unstyled no-thumbnail">
+            <li>
+                <div class="item-inner">
+                    <p class="item-title">
+                        <a href="https://wangzeping722.github.io/2019/12/coredns-startup/" class="title">Coredns 启动流程分析</a>
+                    </p>
+                    <p class="item-date">
+                        <time datetime="2019-12-12 11:03:08 &#43;0800 CST" itemprop="datePublished">2019-12-12</time>
+                    </p>
+                </div>
+            </li>
+            <li>
+                <div class="item-inner">
+                    <p class="item-title">
+                        <a href="https://wangzeping722.github.io/2019/12/how-to-write-webconsole/" class="title">如何设计与实现WebCosole</a>
+                    </p>
+                    <p class="item-date">
+                        <time datetime="2019-12-04 09:13:51 &#43;0800 CST" itemprop="datePublished">2019-12-04</time>
+                    </p>
+                </div>
+            </li>
+        </ul>
+    </div>
+</div>
+  </div>
+</aside>
+
+    
+    
+  <aside class="sidebar sidebar-toc collapse" id="collapseToc" itemscope itemtype="http://schema.org/WPSideBar">
+    <div class="slimContent">
+      <nav id="toc" class="article-toc">
+        <h3 class="toc-title">文章目录</h3>
+        <div class="toc-content always-active"><nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#coredns-的实现">CoreDNS 的实现</a>
+<ul>
+<li><a href="#main函数">main函数</a></li>
+<li><a href="#总结">总结</a></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+        </div>
+      </nav>
+    </div>
+  </aside>
+<main class="main" role="main"><div class="content">
+  <article id="-" class="article article-type-" itemscope
+    itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      <h1 itemprop="name">
+  <a
+    class="article-title"
+    href="/2019/12/coredns-startup/"
+    >Coredns 启动流程分析</a
+  >
+</h1>
+
+      <div class="article-meta">
+        <span class="article-date">
+  <i class="icon icon-calendar-check"></i>
+<a href="https://wangzeping722.github.io/2019/12/coredns-startup/" class="article-date">
+  <time datetime="2019-12-12 11:03:08 &#43;0800 CST" itemprop="datePublished">2019-12-12</time>
+</a>
+</span><span class="article-category">
+  <i class="icon icon-folder"></i>
+  <a class="article-category-link" href="/categories/%E6%9D%82%E6%8A%80%E6%B5%85%E5%B0%9D/"> 杂技浅尝 </a>
+</span>  
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+    <a class="article-tag-link" href="/tags/coredns/"> coredns </a>
+  </span>
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2019/12/coredns-startup/#comments"
+            class="article-comment-link">评论</a></span>
+		<span class="post-wordcount hidden-xs" itemprop="wordCount">字数统计:4560字</span>
+		<span class="post-readcount hidden-xs" itemprop="timeRequired">阅读时长:10分 </span>
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+
+<p>最近在看<code>coredns</code>的实现，它是基于 <a href="https://github.com/caddyserver/caddy">caddy</a> 框架实现的，充分利用了 caddy 的插件功能。由于 coredns 大多数功能都是利用插件功能来实现的，所以整个项目的代码理解起来都比较简单。</p>
+
+<h4 id="coredns-的实现">CoreDNS 的实现</h4>
+
+<p>首先来看根目录下的 <code>Makefile</code> ，其中有自动生成 <code>core/plugin/zplugin.go</code> 文件和 <code>core/dnsserver/zdirectives.go</code> 文件的命令：</p>
+
+<pre><code class="language-makefile">core/plugin/zplugin.go core/dnsserver/zdirectives.go: plugin.cfg
+	go generate coredns.go
+</code></pre>
+
+<p>该命令可以通过 <code>plugin.cfg</code> 中列出的插件列表自动生成 zplugin.go 和 zdirectives.go 中的代码：</p>
+
+<pre><code class="language-go">// generated by directives_generate.go; DO NOT EDIT
+
+package plugin
+
+import (
+	// Include all plugins.
+	_ &quot;github.com/caddyserver/caddy/onevent&quot;
+	_ &quot;github.com/coredns/coredns/plugin/acl&quot;
+	_ &quot;github.com/coredns/coredns/plugin/any&quot;
+	_ &quot;github.com/coredns/coredns/plugin/auto&quot;
+	_ &quot;github.com/coredns/coredns/plugin/autopath&quot;
+	_ &quot;github.com/coredns/coredns/plugin/azure&quot;
+	_ &quot;github.com/coredns/coredns/plugin/bind&quot;
+	_ &quot;github.com/coredns/coredns/plugin/bufsize&quot;
+	_ &quot;github.com/coredns/coredns/plugin/cache&quot;
+	_ &quot;github.com/coredns/coredns/plugin/cancel&quot;
+	_ &quot;github.com/coredns/coredns/plugin/chaos&quot;
+	_ &quot;github.com/coredns/coredns/plugin/clouddns&quot;
+	_ &quot;github.com/coredns/coredns/plugin/debug&quot;
+	_ &quot;github.com/coredns/coredns/plugin/dnssec&quot;
+	_ &quot;github.com/coredns/coredns/plugin/dnstap&quot;
+	_ &quot;github.com/coredns/coredns/plugin/erratic&quot;
+	_ &quot;github.com/coredns/coredns/plugin/errors&quot;
+	_ &quot;github.com/coredns/coredns/plugin/etcd&quot;
+	_ &quot;github.com/coredns/coredns/plugin/file&quot;
+	_ &quot;github.com/coredns/coredns/plugin/forward&quot;
+	_ &quot;github.com/coredns/coredns/plugin/grpc&quot;
+	_ &quot;github.com/coredns/coredns/plugin/health&quot;
+	_ &quot;github.com/coredns/coredns/plugin/hosts&quot;
+	_ &quot;github.com/coredns/coredns/plugin/k8s_external&quot;
+	_ &quot;github.com/coredns/coredns/plugin/kubernetes&quot;
+	_ &quot;github.com/coredns/coredns/plugin/loadbalance&quot;
+	_ &quot;github.com/coredns/coredns/plugin/log&quot;
+	_ &quot;github.com/coredns/coredns/plugin/loop&quot;
+	_ &quot;github.com/coredns/coredns/plugin/metadata&quot;
+	_ &quot;github.com/coredns/coredns/plugin/metrics&quot;
+	_ &quot;github.com/coredns/coredns/plugin/nsid&quot;
+	_ &quot;github.com/coredns/coredns/plugin/pprof&quot;
+	_ &quot;github.com/coredns/coredns/plugin/ready&quot;
+	_ &quot;github.com/coredns/coredns/plugin/reload&quot;
+	_ &quot;github.com/coredns/coredns/plugin/rewrite&quot;
+	_ &quot;github.com/coredns/coredns/plugin/root&quot;
+	_ &quot;github.com/coredns/coredns/plugin/route53&quot;
+	_ &quot;github.com/coredns/coredns/plugin/secondary&quot;
+	_ &quot;github.com/coredns/coredns/plugin/sign&quot;
+	_ &quot;github.com/coredns/coredns/plugin/template&quot;
+	_ &quot;github.com/coredns/coredns/plugin/tls&quot;
+	_ &quot;github.com/coredns/coredns/plugin/trace&quot;
+	_ &quot;github.com/coredns/coredns/plugin/transfer&quot;
+	_ &quot;github.com/coredns/coredns/plugin/whoami&quot;
+	_ &quot;github.com/coredns/federation&quot;
+)
+</code></pre>
+
+<pre><code class="language-go">// generated by directives_generate.go; DO NOT EDIT
+
+package dnsserver
+
+var Directives = []string{
+	&quot;metadata&quot;,
+	&quot;cancel&quot;,
+	&quot;tls&quot;,
+	&quot;reload&quot;,
+	&quot;nsid&quot;,
+	&quot;bufsize&quot;,
+	&quot;root&quot;,
+	&quot;bind&quot;,
+	&quot;debug&quot;,
+	&quot;trace&quot;,
+	&quot;ready&quot;,
+	&quot;health&quot;,
+	&quot;pprof&quot;,
+	&quot;prometheus&quot;,
+	&quot;errors&quot;,
+	&quot;log&quot;,
+	&quot;dnstap&quot;,
+	&quot;acl&quot;,
+	&quot;any&quot;,
+	&quot;chaos&quot;,
+	&quot;loadbalance&quot;,
+	&quot;cache&quot;,
+	&quot;rewrite&quot;,
+	&quot;dnssec&quot;,
+	&quot;autopath&quot;,
+	&quot;template&quot;,
+	&quot;transfer&quot;,
+	&quot;hosts&quot;,
+	&quot;route53&quot;,
+	&quot;azure&quot;,
+	&quot;clouddns&quot;,
+	&quot;federation&quot;,
+	&quot;k8s_external&quot;,
+	&quot;kubernetes&quot;,
+	&quot;file&quot;,
+	&quot;auto&quot;,
+	&quot;secondary&quot;,
+	&quot;etcd&quot;,
+	&quot;loop&quot;,
+	&quot;forward&quot;,
+	&quot;grpc&quot;,
+	&quot;erratic&quot;,
+	&quot;whoami&quot;,
+	&quot;on&quot;,
+	&quot;sign&quot;,
+}
+</code></pre>
+
+<p>这些代码的作用将在后面解释。</p>
+
+<h5 id="main函数">main函数</h5>
+
+<p>我们先看 <code>coredns.go</code> 中的 main 函数：</p>
+
+<pre><code class="language-go">package main
+
+//go:generate go run directives_generate.go
+//go:generate go run owners_generate.go
+
+import (
+	&quot;github.com/coredns/coredns/coremain&quot;
+
+	// 初始化所有插件
+	_ &quot;github.com/coredns/coredns/core/plugin&quot;
+)
+
+func main() {
+	coremain.Run()
+}
+</code></pre>
+
+<p>想必大家都很熟悉 <code>_ &quot;github.com/coredns/coredns/core/plugin&quot;</code> 这一用法，目的就是想执行包 github.com/coredns/coredns/core/plugin 里的 <strong>init</strong> 函数。这时再回头看看 <code>core/plugin/zplugin.go</code> 中的代码，原来它又接着导入了所有在 <strong>plugin.cfg</strong> 中声明的插件的包，并且执行包里的 <strong>init</strong> 函数。这就使得所有的插件都会在 caddy 中注册自己，例如插件 file 的注册如下：</p>
+
+<p><img src="file-init.png" alt="file-init" /></p>
+
+<p><img src="register.png" alt="register plugin" /></p>
+
+<p><code>caddy.Plugin</code> 结构包含了被注册的插件的基本信息,包括注册的服务类型(在CoreDNS中的服务类型是 <code>dns</code> )和请求这个插件时,这个插件该做的 Action。</p>
+
+<pre><code class="language-go">// Plugin is a type which holds information about a plugin.
+type Plugin struct {
+	// ServerType is the type of server this plugin is for.
+	// Can be empty if not applicable, or if the plugin
+	// can associate with any server type.
+	ServerType string
+
+	// Action is the plugin's setup function, if associated
+	// with a directive in the Caddyfile.
+	Action SetupFunc
+}
+</code></pre>
+
+<p>caddy.RegisterPlugin方法的作用:</p>
+
+<p>将指定plugin name(本示例:kubernetes)注册到服务类型为DNS的CoreDNS服务中。最终所有被注册plugin的存储结构为:</p>
+
+<pre><code class="language-go">// plugins is a map of server type to map of plugin name to
+// Plugin. These are the &quot;general&quot; plugins that may or may
+// not be associated with a specific server type. If it's
+// applicable to multiple server types or the server type is
+// irrelevant, the key is empty string (&quot;&quot;). But all plugins
+// must have a name.
+plugins = make(map[string]map[string]Plugin)
+</code></pre>
+
+<p>因此，通过上面的这个过程就把CoreDNS需要的所有的plugin都注册到了 <code>plugins = make(map[string]map[string]Plugin)</code> 结构中，用于后续的使用。</p>
+
+<p>注册完所有的 plugin 之后，就开始执行 main 方法。接着会去调用 <code>coremain.Run()</code> 函数，通过 <code>Run</code> 方法进入 CoreDNS 的初始化过程。需要注意的是，run.go 引入了包 <code>github.com/coredns/coredns/core/dnsserver</code> ，里面也包含了<strong>init</strong> 方法：</p>
+
+<pre><code class="language-go">const serverType = &quot;dns&quot;
+
+// Any flags defined here, need to be namespaced to the serverType other
+// wise they potentially clash with other server types.
+func init() {
+	flag.StringVar(&amp;Port, serverType+&quot;.port&quot;, DefaultPort, &quot;Default port&quot;)
+
+	caddy.RegisterServerType(serverType, caddy.ServerType{
+		Directives: func() []string { return Directives },
+		DefaultInput: func() caddy.Input {
+			return caddy.CaddyfileInput{
+				Filepath:       &quot;Corefile&quot;,
+				Contents:       []byte(&quot;.:&quot; + Port + &quot; {\nwhoami\nlog\n}\n&quot;),
+				ServerTypeName: serverType,
+			}
+		},
+		NewContext: newContext,
+	})
+}
+</code></pre>
+
+<p>这里会向 caddy 注册一个名为 <code>dns</code> 的服务类型，并关联与这个 dns 服务类型相关的一些操作和信息，包括：</p>
+
+<ul>
+<li>插件的执行顺序</li>
+<li>默认配置文件</li>
+<li><code>newContext</code>就是<code>dnsContext</code>对象，实现了 caddy 的 Context 接口</li>
+</ul>
+
+<p>进入 run.go 的 init 函数，这里以注释的形式展示：</p>
+
+<pre><code class="language-go">func init() {
+	// 默认配置文件
+	caddy.DefaultConfigFile = &quot;Corefile&quot;
+	caddy.Quiet = true // don't show init stuff from caddy
+	setVersion()	// 设置版本信息
+
+	// 指定需要加载的配置文件
+	flag.StringVar(&amp;conf, &quot;conf&quot;, &quot;&quot;, &quot;Corefile to load (default \&quot;&quot;+caddy.DefaultConfigFile+&quot;\&quot;)&quot;)
+	flag.BoolVar(&amp;plugins, &quot;plugins&quot;, false, &quot;List installed plugins&quot;)
+	// 需要将PIDfile写入的地址
+	flag.StringVar(&amp;caddy.PidFile, &quot;pidfile&quot;, &quot;&quot;, &quot;Path to write pid file&quot;)
+	flag.BoolVar(&amp;version, &quot;version&quot;, false, &quot;Show version&quot;)
+	flag.BoolVar(&amp;dnsserver.Quiet, &quot;quiet&quot;, false, &quot;Quiet mode (no initialization output)&quot;)
+
+  // 与加载配置文件有关
+	caddy.RegisterCaddyfileLoader(&quot;flag&quot;, caddy.LoaderFunc(confLoader))
+	caddy.SetDefaultCaddyfileLoader(&quot;default&quot;, caddy.LoaderFunc(defaultLoader))
+
+	caddy.AppName = coreName
+	caddy.AppVersion = CoreVersion
+}
+</code></pre>
+
+<p>做了那么多准备工作，终于要进入主方法了，我们来看 run.go 中的 Run 方法：</p>
+
+<p>其他的代码我们就不关心了，直接看 :</p>
+
+<pre><code class="language-go">corefile, err := caddy.LoadCaddyfile(serverType)
+</code></pre>
+
+<p>该函数主要就是利用 coredns 注册的两个方法解析并加载配置文件到 <code>corefile</code>中，corefile 对应的结构体定义如下：</p>
+
+<pre><code class="language-go">// Input represents a Caddyfile; its contents and file path
+// (which should include the file name at the end of the path).
+// If path does not apply (e.g. piped input) you may use
+// any understandable value. The path is mainly used for logging,
+// error messages, and debugging.
+type Input interface {
+	// Gets the Caddyfile contents
+	Body() []byte
+
+	// Gets the path to the origin file
+	Path() string
+
+	// The type of server this input is intended for
+	ServerType() string
+}
+</code></pre>
+
+<p>有了 <code>corefile</code> 我们就能够启动服务器啦：</p>
+
+<pre><code class="language-go">instance, err := caddy.Start(corefile)
+</code></pre>
+
+<p>Start 的细节我们接下来再说，我们先把主流程看完，Start 会返回一个 instance 结构，其包含了服务的状态，并且可以用来控制和访问这些服务：</p>
+
+<pre><code class="language-go">// Instance contains the state of servers created as a result of
+// calling Start and can be used to access or control those servers.
+// It is literally an instance of a server type. Instance values
+// should NOT be copied. Use *Instance for safety.
+type Instance struct {
+   // serverType is the name of the instance's server type
+   serverType string
+
+   // caddyfileInput is the input configuration text used for this process
+   caddyfileInput Input
+
+   // wg is used to wait for all servers to shut down
+   wg *sync.WaitGroup
+
+   // context is the context created for this instance,
+   // used to coordinate the setting up of the server type
+   context Context
+
+   // servers is the list of servers with their listeners
+   servers []ServerListener
+
+   // these callbacks execute when certain events occur
+   OnFirstStartup  []func() error // starting, not as part of a restart
+   OnStartup       []func() error // starting, even as part of a restart
+   OnRestart       []func() error // before restart commences
+   OnRestartFailed []func() error // if restart failed
+   OnShutdown      []func() error // stopping, even as part of a restart
+   OnFinalShutdown []func() error // stopping, not as part of a restart
+
+   // storing values on an instance is preferable to
+   // global state because these will get garbage-
+   // collected after in-process reloads when the
+   // old instances are destroyed; use StorageMu
+   // to access this value safely
+   Storage   map[interface{}]interface{}
+   StorageMu sync.RWMutex
+}
+
+// ServerListener pairs a server to its listener and/or packetconn.
+type ServerListener struct {
+	server   Server
+	listener net.Listener
+	packet   net.PacketConn
+}
+
+type Server interface {
+	TCPServer
+	UDPServer
+}
+</code></pre>
+
+<ul>
+<li>serverType：表示该 instance 的服务类型，在 coredns 中是 <code>dns</code></li>
+<li>caddyfileInput：表示配置文件</li>
+<li>wg：wg 用来等待所有的服务器关闭</li>
+<li>context：启动服务时需要的一些上下文配置，在 coredns 中，这个 context 就是 <code>dnsContext</code></li>
+<li>servers：该 instance 需要启动的服务列表，从上面的代码中可以看出，主要是 <code>TCP</code> 和 <code>UDP</code> 服务。</li>
+<li>Onxxx：on 开头的方法可以看成当特定事件发生时候的回调函数</li>
+<li>Storage：用来存储全局状态</li>
+</ul>
+
+<p>然后主函数阻塞在instance.Wait()上面。</p>
+
+<hr />
+
+<p>接下来，我们来看 Start 函数：</p>
+
+<pre><code class="language-go">// Start starts Caddy with the given Caddyfile.
+//
+// This function blocks until all the servers are listening.
+func Start(cdyfile Input) (*Instance, error) {
+	inst := &amp;Instance{serverType: cdyfile.ServerType(), wg: new(sync.WaitGroup), Storage: make(map[interface{}]interface{})}
+	err := startWithListenerFds(cdyfile, inst, nil)
+	if err != nil {
+		return inst, err
+	}
+	signalSuccessToParent()
+	if pidErr := writePidFile(); pidErr != nil {
+		log.Printf(&quot;[ERROR] Could not write pidfile: %v&quot;, pidErr)
+	}
+
+	// Execute instantiation events
+	EmitEvent(InstanceStartupEvent, inst)
+
+	return inst, nil
+}
+</code></pre>
+
+<p>可以看见，他首先初始化了一个 Instance 结构体，在该函数中主要调用三个函数分别是:</p>
+
+<ul>
+<li>startWithListenerFds: 用于解析 Corefile 配置文件及校验指令执行的是否正确，并启动CoreDNS服务。</li>
+<li>signalSuccessToParent: 向父进程报告服务启动状态。</li>
+<li>writePidFile: 将启动服务的进程 ID(PID) 写入到指定的文件。</li>
+</ul>
+
+<p>从上面的解释中即可知道 startWithListenerFds 是最为核心的函数调用了，接下来直接详细的分析startWithListenerFds 函数。在该函数中首先会调用</p>
+
+<pre><code class="language-go">err = ValidateAndExecuteDirectives(cdyfile, inst, false)
+</code></pre>
+
+<p>从名字就可以看出这个函数的主要功能就是验证和执行指令（也就是插件），首先他会调用</p>
+
+<pre><code class="language-go">sblocks, err := loadServerBlocks(stypeName, cdyfile.Path(), bytes.NewReader(cdyfile.Body()))
+</code></pre>
+
+<p>来解析配置文件中的内容，如果配置文件中出现了coredns无法识别的插件，那么就会直接返回错误，程序终止，如果解析成功，那么就会把配置文件中的内容映射到 ServerBlock 结构体中：</p>
+
+<pre><code class="language-go">// ServerBlock associates any number of keys (usually addresses
+// of some sort) with tokens (grouped by directive name).
+type ServerBlock struct {
+	Keys   []string
+	Tokens map[string][]Token
+}
+</code></pre>
+
+<p>其中，keys 用来存储配置文件中 Zone 的相关数据，而 Tokens 则用来存储该 server 中的插件的相关信息，其中 Tokens 的 key 是 plugin name , []Token 存储的是该 plugin 在 Corefile 中的位置，便于后续的解析操作。可能不太好理解，但是对应配置文件就非常好理解啦：</p>
+
+<pre><code class="language-Corefile">// coredns.io:5300 为 keys
+coredns.io:5300 {
+    file db.coredns.io
+}
+
+example.io:53 {
+    log
+    errors
+    file db.example.io
+}
+
+example.net:53 {
+    file db.example.net
+}
+
+.:53 {
+    kubernetes
+    proxy . 8.8.8.8
+    log
+    errors
+    cache
+}
+</code></pre>
+
+<p><img src="debug.png" alt="" /></p>
+
+<p>如上图，对应的 zone 就是 <code>example.io:53</code>，其中包含三个插件，所以 Tokens 有三个元素，其中 file 插件对应的value 的长度为 2。</p>
+
+<p>接着，会调用</p>
+
+<pre><code class="language-go">inst.context = stype.NewContext(inst)
+</code></pre>
+
+<p>这里的 stype.NewContext 就是在初始化阶段赋值给他的 <code>newContext</code>函数：</p>
+
+<pre><code class="language-go">func newContext(i *caddy.Instance) caddy.Context {
+	return &amp;dnsContext{keysToConfigs: make(map[string]*Config)}
+}
+
+// dnsContext
+// 实现了caddy.Context接口
+type dnsContext struct {
+	keysToConfigs map[string]*Config
+
+	// configs is the master list of all site configs.
+	// configs是所有站点配置的主列表。
+	configs []*Config
+}
+
+Context interface {
+	// Called after the Caddyfile is parsed into server
+	// blocks but before the directives are executed,
+	// this method gives you an opportunity to inspect
+	// the server blocks and prepare for the execution
+	// of directives. Return the server blocks (which
+	// you may modify, if desired) and an error, if any.
+	// The first argument is the name or path to the
+	// configuration file (Caddyfile).
+	//
+	// This function can be a no-op and simply return its
+	// input if there is nothing to do here.
+	InspectServerBlocks(string, []caddyfile.ServerBlock) ([]caddyfile.ServerBlock, error)
+
+	// This is what Caddy calls to make server instances.
+	// By this time, all directives have been executed and,
+	// presumably, the context has enough state to produce
+	// server instances for Caddy to start.
+	MakeServers() ([]Server, error)
+}
+</code></pre>
+
+<p>所以，创建一个实现了 <code>caddy.Context</code> 接口的 <code>dnsContext</code>结构体，并赋值给 <code>instance.Context</code>，然后调用 Context 的接口方法 InspectServerBlocks ，这个函数会在解析完Corefile文件之后，执行Corefile中的指令之前会被调用，用于进一步的对 sblocks 进行检查并进行进一步的参数完善。：</p>
+
+<pre><code class="language-go">sblocks, err = inst.context.InspectServerBlocks(cdyfile.Path(), sblocks)
+</code></pre>
+
+<p>等上面的准备工作准备完成之后，会调用<code>executeDirectives</code>去遍历所有的指令<code>directives</code>,并执行每个 sblocks 中的指令,并设置相应的 Controller 去执行相关 plugin 的 action 动作, 每个 serverblock 中的插件的 setup 只执行一次:</p>
+
+<pre><code class="language-go">func executeDirectives(inst *Instance, filename string,
+   directives []string, sblocks []caddyfile.ServerBlock, justValidate bool) error {
+   // map of server block ID to map of directive name to whatever.
+   storages := make(map[int]map[string]interface{})
+
+   // It is crucial that directives are executed in the proper order.
+   // We loop with the directives on the outer loop so we execute
+   // a directive for all server blocks before going to the next directive.
+   // This is important mainly due to the parsing callbacks (below).
+   for _, dir := range directives {
+      for i, sb := range sblocks {
+         var once sync.Once
+         if _, ok := storages[i]; !ok {
+            storages[i] = make(map[string]interface{})
+         }
+
+         for j, key := range sb.Keys {
+            // Execute directive if it is in the server block
+            if tokens, ok := sb.Tokens[dir]; ok {
+               controller := &amp;Controller{
+                  instance:  inst,
+                  Key:       key,
+                  Dispenser: caddyfile.NewDispenserTokens(filename, tokens),
+                  OncePerServerBlock: func(f func() error) error {
+                     var err error
+                     once.Do(func() {
+                        err = f()
+                     })
+                     return err
+                  },
+                  ServerBlockIndex:    i,
+                  ServerBlockKeyIndex: j,
+                  ServerBlockKeys:     sb.Keys,
+                  ServerBlockStorage:  storages[i][dir],
+               }
+
+               setup, err := DirectiveAction(inst.serverType, dir)
+               if err != nil {
+                  return err
+               }
+
+               err = setup(controller)
+               if err != nil {
+                  return err
+               }
+
+               storages[i][dir] = controller.ServerBlockStorage // persist for this server block
+            }
+         }
+      }
+
+      if !justValidate {
+         // See if there are any callbacks to execute after this directive
+         if allCallbacks, ok := parsingCallbacks[inst.serverType]; ok {
+            callbacks := allCallbacks[dir]
+            for _, callback := range callbacks {
+               if err := callback(inst.context); err != nil {
+                  return err
+               }
+            }
+         }
+      }
+   }
+
+   return nil
+}
+</code></pre>
+
+<p>执行完了 <code>ValidateAndExecuteDirectives</code> 函数，就意味着所有的插件都已经准备完毕，接着调用 <code>MakeServers</code>返回一个服务器列表：</p>
+
+<pre><code class="language-go">slist, err := inst.context.MakeServers()
+</code></pre>
+
+<p>我们深入进去会发现，这个方法其实非常简单：</p>
+
+<pre><code class="language-go">// MakeServers uses the newly-created siteConfigs to create and return a list of server instances.
+func (h *dnsContext) MakeServers() ([]caddy.Server, error) {
+
+   // Now that all Keys and Directives are parsed and initialized
+   // lets verify that there is no overlap on the zones and addresses to listen for
+   errValid := h.validateZonesAndListeningAddresses()
+   if errValid != nil {
+      return nil, errValid
+   }
+
+   // we must map (group) each config to a bind address
+   groups, err := groupConfigsByListenAddr(h.configs)
+   if err != nil {
+      return nil, err
+   }
+   // then we create a server for each group
+   var servers []caddy.Server
+   for addr, group := range groups {
+      // switch on addr
+      switch tr, _ := parse.Transport(addr); tr {
+      case transport.DNS:
+         s, err := NewServer(addr, group)
+         if err != nil {
+            return nil, err
+         }
+         servers = append(servers, s)
+
+      case transport.TLS:
+         s, err := NewServerTLS(addr, group)
+         if err != nil {
+            return nil, err
+         }
+         servers = append(servers, s)
+
+      case transport.GRPC:
+         s, err := NewServergRPC(addr, group)
+         if err != nil {
+            return nil, err
+         }
+         servers = append(servers, s)
+
+      case transport.HTTPS:
+         s, err := NewServerHTTPS(addr, group)
+         if err != nil {
+            return nil, err
+         }
+         servers = append(servers, s)
+      }
+
+   }
+
+   return servers, nil
+}
+</code></pre>
+
+<p>首先，它验证是否有端口冲突（同一zone，并且同一端口才算冲突），然后再根据 dnsContext 中的 <code>configs</code>生成不同的 <code>group</code>，根据监听的端口不同被分到不同的 group，最后返回一个 <code>groups</code>，之后遍历该 <code>groups</code>, 然后根据不同的 transport 去启动相应的服务，当前 CoreDNS 支持4种类型的 transport，默认情况下都是 DNS 。</p>
+
+<p>但是，无论哪种 transport 最终都会调用 <code>NewServer</code>：</p>
+
+<pre><code class="language-go">func NewServer(addr string, group []*Config) (*Server, error) {
+
+   s := &amp;Server{
+      Addr:         addr,
+      zones:        make(map[string]*Config),
+      graceTimeout: 5 * time.Second,
+   }
+   for _, site := range group {
+      
+      s.zones[site.Zone] = site
+
+      // compile custom plugin for everything
+      var stack plugin.Handler
+      for i := len(site.Plugin) - 1; i &gt;= 0; i-- {
+         stack = site.Plugin[i](stack)
+
+         // register the *handler* also
+         site.registerHandler(stack)
+
+         if s.trace == nil &amp;&amp; stack.Name() == &quot;trace&quot; {
+            // we have to stash away the plugin, not the
+            // Tracer object, because the Tracer won't be initialized yet
+            if t, ok := stack.(trace.Trace); ok {
+               s.trace = t
+            }
+         }
+         // Unblock CH class queries when any of these plugins are loaded.
+         if _, ok := EnableChaos[stack.Name()]; ok {
+            s.classChaos = true
+         }
+      }
+      site.pluginChain = stack
+   }
+
+   return s, nil
+}
+</code></pre>
+
+<p>由于代码过长，只看重点部分，先创建了一个 <code>Server</code> 变量，然后遍历 group ，并将每个 site 对应的 plugins 以栈的形式组成  <code>pluginChain</code>，最后返回。</p>
+
+<p>上面只是make了CoreDNS需要启动的<code>Server</code>结构,但是真正的服务进程到现在这个阶段还没有真正的启动。当所有的 plugin 需要的准备工作都处理完成之后，就调用<code>startServers</code>来启动CoreDNS服务,<code>startServers</code>函数的定义如下:</p>
+
+<pre><code class="language-go">func startServers(serverList []Server, inst *Instance, restartFds map[string]restartTriple) error {
+   for _, s := range serverList {
+      var (
+         ln  net.Listener
+         pc  net.PacketConn
+         err error
+      )
+
+ 			......
+      ......
+      if ln == nil {
+         ln, err = s.Listen()
+         if err != nil {
+            return fmt.Errorf(&quot;Listen: %v&quot;, err)
+         }
+      }
+      if pc == nil {
+         pc, err = s.ListenPacket()
+         if err != nil {
+            return fmt.Errorf(&quot;ListenPacket: %v&quot;, err)
+         }
+      }
+
+      inst.servers = append(inst.servers, ServerListener{server: s, listener: ln, packet: pc})
+   }
+
+   for _, s := range inst.servers {
+      inst.wg.Add(2)
+      stopWg.Add(2)
+      func(s Server, ln net.Listener, pc net.PacketConn, inst *Instance) {
+         go func() {
+            defer func() {
+               inst.wg.Done()
+               stopWg.Done()
+            }()
+            errChan &lt;- s.Serve(ln)
+         }()
+
+         go func() {
+            defer func() {
+               inst.wg.Done()
+               stopWg.Done()
+            }()
+            errChan &lt;- s.ServePacket(pc)
+         }()
+      }(s.server, s.listener, s.packet, inst)
+   }
+
+   // Log errors that may be returned from Serve() calls,
+   // these errors should only be occurring in the server loop.
+   go func() {
+      for {
+         select {
+         case err := &lt;-errChan:
+            if err != nil {
+               if !strings.Contains(err.Error(), &quot;use of closed network connection&quot;) {
+                  // this error is normal when closing the listener; see https://github.com/golang/go/issues/4373
+                  log.Println(err)
+               }
+            }
+         case &lt;-stopChan:
+            return
+         }
+      }
+   }()
+
+   go func() {
+      stopWg.Wait()
+      stopChan &lt;- struct{}{}
+   }()
+
+   return nil
+}
+
+
+// Serve starts the server with an existing listener. It blocks until the server stops.
+// This implements caddy.TCPServer interface.
+func (s *Server) Serve(l net.Listener) error {
+	s.m.Lock()
+	s.server[tcp] = &amp;dns.Server{Listener: l, Net: &quot;tcp&quot;, Handler: dns.HandlerFunc(func(w dns.ResponseWriter, r *dns.Msg) {
+		ctx := context.WithValue(context.Background(), Key{}, s)
+		s.ServeDNS(ctx, w, r)
+	})}
+	s.m.Unlock()
+
+	return s.server[tcp].ActivateAndServe()
+}
+
+// ServePacket starts the server with an existing packetconn. It blocks until the server stops.
+// This implements caddy.UDPServer interface.
+func (s *Server) ServePacket(p net.PacketConn) error {
+	s.m.Lock()
+	s.server[udp] = &amp;dns.Server{PacketConn: p, Net: &quot;udp&quot;, Handler: dns.HandlerFunc(func(w dns.ResponseWriter, r *dns.Msg) {
+		ctx := context.WithValue(context.Background(), Key{}, s)
+		s.ServeDNS(ctx, w, r)
+	})}
+	s.m.Unlock()
+
+	return s.server[udp].ActivateAndServe()
+}
+</code></pre>
+
+<p>同样省略部分代码，首先遍历 serverList ，并且生成 <code>inst.servers</code> 列表，然后再遍历 <code>inst.servers</code> 列表，启动协程分别监听 TCP 和 UDP，并且分别调用各自内部的 ServeDNS 来进行服务。</p>
+
+<p>走到这里，启动流程算是彻底走完了。</p>
+
+<h5 id="总结">总结</h5>
+
+<p>CoreDNS 代码的结构非常清晰，通过初始化时加载自定义的插件顺序，依次注入到 caddy 中去，并在执行的时候，按照定义的插件顺序依次执行，形成一个链式的调用结构。CoreDNS 同样还支持多种协议供使用者选择，这是一个非常好的实现。</p>
+
+<p><strong>参考</strong>：</p>
+
+<ol>
+<li><a href="https://xigang.github.io/2019/08/25/coredns/">CoreDNS源码分析</a></li>
+<li><a href="https://juejin.im/post/5d11d262e51d4556f76e80ca">CoreDNS源码分析</a></li>
+</ol>
+
+    </div>
+  </article>
+<section id="comments">
+</section>
+
+</div><nav class="bar bar-footer clearfix" data-stick-bottom>
+    <div class="bar-inner">
+        <ul class="pager pull-left">
+            <li class="prev">
+                <a href="https://wangzeping722.github.io/2019/12/how-to-write-webconsole/" title="如何设计与实现WebCosole"><i
+                        class="icon icon-angle-left"
+                        aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+            </li>
+            
+            <li class="toggle-toc">
+                <a class="toggle-btn collapsed" data-toggle="collapse" href="#collapseToc" aria-expanded="false"
+                    title="文章目录" role="button">
+                    <span>[&nbsp;</span><span>文章目录</span>
+                    <i class="text-collapsed icon icon-anchor"></i>
+                    <i class="text-in icon icon-close"></i>
+                    <span>]</span>
+                </a>
+            </li>
+        </ul>
+        <div class="bar-right">
+            <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter"
+                data-mobile-sites="weibo,qq,qzone"></div>
+        </div>
+    </div>
+</nav>
+</main><footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+<ul class="social-links">
+    <li><a href="https://github.com/wangzeping722" target="_blank" title="github" data-toggle=tooltip data-placement=top >
+            <i class="icon icon-github"></i></a></li>
+    <li><a href="https://wangzeping722.github.io/index.xml" target="_blank" title="rss" data-toggle=tooltip data-placement=top >
+            <i class="icon icon-rss"></i></a></li>
+</ul>
+  <div class="copyright">
+    &copy;2019  -
+    2019
+    <div class="publishby">
+        Theme by <a href="https://github.com/xiaoheiAh" target="_blank"> xiaoheiAh </a>base on<a href="https://github.com/xiaoheiAh/hugo-theme-pure" target="_blank"> pure</a>.
+    </div>
+  </div>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+   window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+<script type="text/javascript" src="https://cdn.staticfile.org/highlight.js/9.15.10/highlight.min.js"></script>
+<script type="text/javascript" src="https://cdn.staticfile.org/highlight.js/9.15.10/languages/rust.min.js"></script>
+<script type="text/javascript"
+   src="https://cdn.staticfile.org/highlight.js/9.15.10/languages/dockerfile.min.js"></script>
+<script>
+hljs.configure({
+  tabReplace: '    ', 
+  classPrefix: ''     
+                      
+})
+hljs.initHighlightingOnLoad();
+</script>
+<script type="text/javascript" src="https://wangzeping722.github.io/js/application.js"></script>
+<script type="text/javascript" src="https://wangzeping722.github.io/js/plugin.js"></script>
+<script>
+      (function (window) {
+          var INSIGHT_CONFIG = {
+              TRANSLATION: {
+                  POSTS: '文章',
+                  PAGES: '页面',
+                  CATEGORIES: '分类',
+                  TAGS: '标签',
+                  UNTITLED: '(未命名)',
+              },
+              ROOT_URL: 'https:\/\/wangzeping722.github.io\/',
+              CONTENT_URL: 'https:\/\/wangzeping722.github.io\/\/searchindex.json ',
+          };
+          window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+      })(window);
+      </script>
+<script type="text/javascript" src="https://wangzeping722.github.io/js/insight.js"></script>
+
+  </body>
+</html>
