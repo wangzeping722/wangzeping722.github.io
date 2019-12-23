@@ -5,10 +5,19 @@
     <link>https://wangzeping722.github.io/posts/</link>
     <description>Recent content in Posts on WeroNG</description>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Thu, 12 Dec 2019 11:03:08 +0800</lastBuildDate>
+    <lastBuildDate>Mon, 23 Dec 2019 10:36:05 +0800</lastBuildDate>
     
         <atom:link href="https://wangzeping722.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>DNS学习总结</title>
+      <link>https://wangzeping722.github.io/2019/12/dns-recording/</link>
+      <pubDate>Mon, 23 Dec 2019 10:36:05 +0800</pubDate>
+      
+      <guid>https://wangzeping722.github.io/2019/12/dns-recording/</guid>
+      <description>DNS 有多种记录类型，每种记录都有不同的作用，这篇文章主要总结了常用的记录。 A A（Address）记录用来指定主机名（域名）对应的 IPv4 地址记录。比</description>
+    </item>
     
     <item>
       <title>Coredns 启动流程分析</title>
