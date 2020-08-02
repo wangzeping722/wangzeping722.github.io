@@ -1,22 +1,42 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>WeroNG</title>
+    <title>Wrong</title>
     <link>https://wangzeping722.github.io/</link>
-    <description>Recent content on WeroNG</description>
+    <description>Recent content on Wrong</description>
     <generator>Hugo -- gohugo.io</generator>
+    <language>zh</language>
+    <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
     <lastBuildDate>Mon, 23 Dec 2019 10:36:05 +0800</lastBuildDate>
     
-        <atom:link href="https://wangzeping722.github.io/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://wangzeping722.github.io/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
-      <title>Posts</title>
-      <link>https://wangzeping722.github.io/posts/</link>
+      <title>DNS学习总结</title>
+      <link>https://wangzeping722.github.io/posts/dns-recording/</link>
       <pubDate>Mon, 23 Dec 2019 10:36:05 +0800</pubDate>
       
-      <guid>https://wangzeping722.github.io/posts/</guid>
-      <description></description>
+      <guid>https://wangzeping722.github.io/posts/dns-recording/</guid>
+      <description>DNS 有多种记录类型，每种记录都有不同的作用，这篇文章主要总结了常用的记录。 A A（Address）记录用来指定主机名（域名）对应的 IPv4 地址记录。比</description>
+    </item>
+    
+    <item>
+      <title>Coredns 启动流程分析</title>
+      <link>https://wangzeping722.github.io/posts/coredns-startup/</link>
+      <pubDate>Thu, 12 Dec 2019 11:03:08 +0800</pubDate>
+      
+      <guid>https://wangzeping722.github.io/posts/coredns-startup/</guid>
+      <description>最近在看coredns的实现，它是基于 caddy 框架实现的，充分利用了 caddy 的插件功能。由于 coredns 大多数功能都是利用插件功能来实现的，所以整个项目的代码理解</description>
+    </item>
+    
+    <item>
+      <title>如何设计与实现WebCosole</title>
+      <link>https://wangzeping722.github.io/posts/how-to-write-webconsole/</link>
+      <pubDate>Wed, 04 Dec 2019 09:13:51 +0800</pubDate>
+      
+      <guid>https://wangzeping722.github.io/posts/how-to-write-webconsole/</guid>
+      <description>1. 调研 前端：了解到有一个非常优秀的开源web终端库： xterm.js , 使用起来也比较简单。 后端：使用 go 语言实现，因为 go 语言拥有许多优秀的开源ssh库，能够</description>
     </item>
     
     <item>

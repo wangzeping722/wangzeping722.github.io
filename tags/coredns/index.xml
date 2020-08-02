@@ -1,21 +1,23 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>coredns on WeroNG</title>
+    <title>coredns on Wrong</title>
     <link>https://wangzeping722.github.io/tags/coredns/</link>
-    <description>Recent content in coredns on WeroNG</description>
+    <description>Recent content in coredns on Wrong</description>
     <generator>Hugo -- gohugo.io</generator>
+    <language>zh</language>
+    <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
     <lastBuildDate>Thu, 12 Dec 2019 11:03:08 +0800</lastBuildDate>
     
-        <atom:link href="https://wangzeping722.github.io/tags/coredns/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://wangzeping722.github.io/tags/coredns/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Coredns 启动流程分析</title>
-      <link>https://wangzeping722.github.io/2019/12/coredns-startup/</link>
+      <link>https://wangzeping722.github.io/posts/coredns-startup/</link>
       <pubDate>Thu, 12 Dec 2019 11:03:08 +0800</pubDate>
       
-      <guid>https://wangzeping722.github.io/2019/12/coredns-startup/</guid>
+      <guid>https://wangzeping722.github.io/posts/coredns-startup/</guid>
       <description>最近在看coredns的实现，它是基于 caddy 框架实现的，充分利用了 caddy 的插件功能。由于 coredns 大多数功能都是利用插件功能来实现的，所以整个项目的代码理解</description>
     </item>
     

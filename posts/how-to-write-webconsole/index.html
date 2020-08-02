@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+<meta itemprop="name" content="如何设计与实现WebCosole">
+<meta itemprop="description" content="1. 调研 前端：了解到有一个非常优秀的开源web终端库： xterm.js , 使用起来也比较简单。 后端：使用 go 语言实现，因为 go 语言拥有许多优秀的开源ssh库，能够">
+<meta itemprop="datePublished" content="2019-12-04T09:13:51&#43;08:00" />
+<meta itemprop="dateModified" content="2019-12-04T09:13:51&#43;08:00" />
+<meta itemprop="wordCount" content="827">
+
+
+
+<meta itemprop="keywords" content="ssh," /><meta property="og:title" content="如何设计与实现WebCosole" />
+<meta property="og:description" content="1. 调研 前端：了解到有一个非常优秀的开源web终端库： xterm.js , 使用起来也比较简单。 后端：使用 go 语言实现，因为 go 语言拥有许多优秀的开源ssh库，能够" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://wangzeping722.github.io/posts/how-to-write-webconsole/" />
+<meta property="article:published_time" content="2019-12-04T09:13:51+08:00" />
+<meta property="article:modified_time" content="2019-12-04T09:13:51+08:00" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="如何设计与实现WebCosole"/>
+<meta name="twitter:description" content="1. 调研 前端：了解到有一个非常优秀的开源web终端库： xterm.js , 使用起来也比较简单。 后端：使用 go 语言实现，因为 go 语言拥有许多优秀的开源ssh库，能够"/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>如何设计与实现WebCosole</title>
+	<link rel="stylesheet" href="https://wangzeping722.github.io/css/style.min.eac77496566fd7d5768fd650ddb0b2b181ca6a2d7c5fdd6fe6b8ba4bf47e566f.css" integrity="sha256-6sd0llZv19V2j9ZQ3bCysYHKai18X91v5ri6S/R+Vm8=" crossorigin="anonymous">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://wangzeping722.github.io/">Wrong</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					
+				<a href="https://wangzeping722.github.io/posts/">Posts</a>
+				<a href="https://wangzeping722.github.io/about/">About</a>
+
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://github.com/wangzeping722" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title=""><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://wangzeping722.github.io/posts/">Posts</a></li>
+			<li><a href="https://wangzeping722.github.io/about/">About</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Dec 4, 2019</span></div>
+				<h1>如何设计与实现WebCosole</h1>
+			</header>
+			<div class="content">
+				<h3 id="1-调研">1. 调研<a href="#1-调研" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<p>前端：了解到有一个非常优秀的开源web终端库： <strong>xterm.js</strong> , 使用起来也比较简单。</p>
+<p>后端：使用 go 语言实现，因为 go 语言拥有许多优秀的开源ssh库，能够满足我们的需求。</p>
+<p>难点：</p>
+<pre><code>1. 如何与 cf(cloud foundry) 进行交互得到 `ssh code` ？
+2. 如何把 ssh 命令行转换成 websocket 通讯, 并输出到 xterm.js 中？
+3. 如何控制访问权限？
+</code></pre>
+<h3 id="2-原理">2. 原理<a href="#2-原理" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<p><img src="webconsole1.png" alt="webconsole原理图"></p>
+<p>​	1. 浏览器向服务器发起 websocket 请求</p>
+<p>​	2. 服务器通过 ssh 连接到 cf 容器</p>
+<p>​	3. 连接建立，服务器负责转发消息</p>
+<p>在后端和浏览器之间建立websocket连接后，将用户在浏览器中输入的命令通过 websocket 协议发送到后端，后端使用 ssh 协议将命令输入到容器ssh进程的 stdin，命令执行后，再从 stdout 中读取输出，通过websocket协议返回浏览器显示给用户，达到交互的目的。</p>
+<h3 id="3-问题解决以及服务端实现">3. 问题解决以及服务端实现<a href="#3-问题解决以及服务端实现" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<p>在前两个步骤中，我已经通过分析把原理和难点梳理清楚了，目前就需要着手解决这些问题。</p>
+<h4 id="31-如何获取-ssh-code">3.1 如何获取 ssh code<a href="#31-如何获取-ssh-code" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+<p>cf 有一个自带的命令 <code>cf ssh-code</code> 能够获取连接到容器用的 <code>ssh code</code>，但是我并没有在 cf 开源的 go 语言客户端 <code>cfclient</code> 中发现相关的 API，所以我去查看了 cf cli 的源码，并在里面发现了 <strong>cc</strong> 暴露出来的接口，有了这个接口之后，就能够通过 http 请求的方式获取 <code>ssh-code</code>。由于 <code>cfclient</code> 中并没有相关的代码，所以不得不自己实现一些方来获取 <code>ssh-code</code>, 于是这个问题解决了。</p>
+<h4 id="32-如何将-websocket-和-ssh-这两个协议的消息进行转换">3.2 如何将 websocket 和 ssh 这两个协议的消息进行转换<a href="#32-如何将-websocket-和-ssh-这两个协议的消息进行转换" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+<p><strong>连接建立</strong>：</p>
+<p><img src="webconsole2.png" alt=""></p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">WS</span><span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">gin</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+	<span class="c1">// 初始化websocket连接
+</span><span class="c1"></span>	<span class="nx">upgrader</span> <span class="o">:=</span> <span class="nx">websocket</span><span class="p">.</span><span class="nx">Upgrader</span><span class="p">{</span>
+		<span class="nx">ReadBufferSize</span><span class="p">:</span>  <span class="mi">1024</span><span class="p">,</span>
+		<span class="nx">WriteBufferSize</span><span class="p">:</span> <span class="mi">1024</span><span class="p">,</span>
+	<span class="p">}</span>
+	<span class="nx">ws</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">upgrader</span><span class="p">.</span><span class="nf">Upgrade</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">Writer</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">Request</span><span class="p">,</span> <span class="kc">nil</span><span class="p">)</span>
+	<span class="k">defer</span> <span class="nx">ws</span><span class="p">.</span><span class="nf">Close</span><span class="p">(</span><span class="p">)</span>
+  
+	<span class="c1">// 初始化ssh连接
+</span><span class="c1"></span>	<span class="nx">cl</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="s">&#34;claims&#34;</span><span class="p">)</span>
+	<span class="nx">s</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="s">&#34;session&#34;</span><span class="p">)</span>
+	<span class="nx">claims</span> <span class="o">:=</span> <span class="nx">cl</span><span class="p">.</span><span class="p">(</span><span class="o">*</span><span class="nx">utils</span><span class="p">.</span><span class="nx">Claims</span><span class="p">)</span>
+	<span class="nx">session</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="p">(</span><span class="o">*</span><span class="nx">utils</span><span class="p">.</span><span class="nx">Session</span><span class="p">)</span>
+
+	<span class="nx">sshShell</span> <span class="o">:=</span> <span class="nx">utils</span><span class="p">.</span><span class="nx">SSHShellSession</span><span class="p">{</span>
+		<span class="nx">Node</span><span class="p">:</span> <span class="nx">utils</span><span class="p">.</span><span class="nx">Node</span><span class="p">{</span>
+			<span class="nx">Host</span><span class="p">:</span> <span class="nx">claims</span><span class="p">.</span><span class="nx">Host</span><span class="p">,</span>
+			<span class="nx">Port</span><span class="p">:</span> <span class="nx">claims</span><span class="p">.</span><span class="nx">Port</span><span class="p">,</span>
+		<span class="p">}</span><span class="p">,</span>
+	<span class="p">}</span>
+
+	<span class="kd">var</span> <span class="nx">wsBuff</span> <span class="nx">WebSocketBufferWriter</span>
+	<span class="nx">sshShell</span><span class="p">.</span><span class="nx">StdoutPipe</span> <span class="p">=</span> <span class="o">&amp;</span><span class="nx">wsBuff</span>
+	<span class="nx">err</span> <span class="p">=</span> <span class="nx">sshConn</span><span class="p">.</span><span class="nf">Connect</span><span class="p">(</span><span class="nx">username</span><span class="p">,</span> <span class="nx">password</span><span class="p">)</span>
+	<span class="k">defer</span> <span class="nx">sshConn</span><span class="p">.</span><span class="nf">Close</span><span class="p">(</span><span class="p">)</span>
+	<span class="k">defer</span> <span class="nx">wsBuff</span><span class="p">.</span><span class="nf">Flush</span><span class="p">(</span><span class="nx">websocket</span><span class="p">.</span><span class="nx">TextMessage</span><span class="p">,</span> <span class="nx">ws</span><span class="p">)</span>
+	<span class="o">...</span><span class="o">...</span>
+  <span class="o">...</span><span class="o">...</span>
+<span class="p">}</span>
+</code></pre></div><p><strong>连接保持：</strong></p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">WS</span><span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">gin</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
+  <span class="o">...</span><span class="o">...</span>
+  <span class="o">...</span><span class="o">...</span>
+	<span class="nx">done</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="kt">bool</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+	<span class="nx">setDone</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">(</span><span class="p">)</span> <span class="p">{</span> <span class="nx">done</span> <span class="o">&lt;-</span> <span class="kc">true</span> <span class="p">}</span>
+
+	<span class="c1">// 数据转换：websocket ----&gt; SSH
+</span><span class="c1"></span>	<span class="nx">writeMessageToSSHServer</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">(</span><span class="nx">wc</span> <span class="nx">io</span><span class="p">.</span><span class="nx">WriteCloser</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">defer</span> <span class="nf">setDone</span><span class="p">(</span><span class="p">)</span>
+		<span class="k">for</span> <span class="p">{</span>
+			<span class="c1">// 从websocket读取数据
+</span><span class="c1"></span>			<span class="nx">msgType</span><span class="p">,</span> <span class="nx">p</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">ws</span><span class="p">.</span><span class="nf">ReadMessage</span><span class="p">(</span><span class="p">)</span>
+
+			<span class="k">if</span> <span class="nx">err</span> <span class="p">=</span> <span class="nf">DispatchMessage</span><span class="p">(</span><span class="nx">sshShell</span><span class="p">.</span><span class="nx">Session</span><span class="p">,</span> <span class="nx">msgType</span><span class="p">,</span> <span class="nx">p</span><span class="p">,</span> <span class="nx">wc</span><span class="p">)</span><span class="p">;</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+				<span class="nx">log</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;Error: error write data to ssh server:&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+				<span class="k">return</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+
+	<span class="nx">stopper</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="kt">bool</span><span class="p">)</span>
+	<span class="c1">// 数据转换：SSH ----&gt; websocket
+</span><span class="c1"></span>	<span class="nx">writeBufferToWebSocket</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">(</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">defer</span> <span class="nf">setDone</span><span class="p">(</span><span class="p">)</span>
+		<span class="nx">tick</span> <span class="o">:=</span> <span class="nx">time</span><span class="p">.</span><span class="nf">NewTicker</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Millisecond</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Duration</span><span class="p">(</span><span class="nx">utils</span><span class="p">.</span><span class="nx">Config</span><span class="p">.</span><span class="nx">SSH</span><span class="p">.</span><span class="nx">BufferCheckerCycleTime</span><span class="p">)</span><span class="p">)</span>
+		<span class="k">defer</span> <span class="nx">tick</span><span class="p">.</span><span class="nf">Stop</span><span class="p">(</span><span class="p">)</span>
+		<span class="k">for</span> <span class="p">{</span>
+			<span class="k">select</span> <span class="p">{</span>
+			<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">tick</span><span class="p">.</span><span class="nx">C</span><span class="p">:</span>
+				<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">wsBuff</span><span class="p">.</span><span class="nf">Flush</span><span class="p">(</span><span class="nx">websocket</span><span class="p">.</span><span class="nx">TextMessage</span><span class="p">,</span> <span class="nx">ws</span><span class="p">)</span><span class="p">;</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+					<span class="nx">log</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;Error: error sending data via webSocket:&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+					<span class="k">return</span>
+				<span class="p">}</span>
+			<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">stopper</span><span class="p">:</span>
+				<span class="k">return</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+
+	<span class="k">go</span> <span class="nf">writeMessageToSSHServer</span><span class="p">(</span><span class="nx">sshShell</span><span class="p">.</span><span class="nx">StdinPipe</span><span class="p">)</span>
+	<span class="k">go</span> <span class="nf">writeBufferToWebSocket</span><span class="p">(</span><span class="p">)</span>
+	<span class="k">go</span> <span class="kd">func</span><span class="p">(</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">defer</span> <span class="nf">setDone</span><span class="p">(</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">sshShell</span><span class="p">.</span><span class="nx">Session</span><span class="p">.</span><span class="nf">Wait</span><span class="p">(</span><span class="p">)</span><span class="p">;</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span><span class="p">{</span>
+			<span class="nx">log</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;ssh exist from server&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+		<span class="p">}</span>
+	<span class="p">}</span><span class="p">(</span><span class="p">)</span>
+
+	<span class="o">&lt;-</span><span class="nx">done</span>
+	<span class="nx">stopper</span> <span class="o">&lt;-</span> <span class="kc">true</span> 
+	<span class="nx">log</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;Info: websocket finished!&#34;</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div><p><strong>控制访问权限</strong>：</p>
+<p>利用 cf 自带的权限认证机制实现。</p>
+
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://wangzeping722.github.io/tags/ssh">ssh</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2019-12-04 09:13 &#43;0800</p>
+			</footer>
+		</article>
+		<div class="post-nav thin">
+			<a class="next-post" href="https://wangzeping722.github.io/posts/coredns-startup/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;</span><br><span>Coredns 启动流程分析</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2020 <a href="https://wangzeping722.github.io/">Wrong</a> &#183; <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://wangzeping722.github.io/posts/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+
+	<script src="https://wangzeping722.github.io/js/bundle.min.4a9a0ac3d2217822c7865b4161e6c2a71de1d70492264337755427898dd718f6.js" integrity="sha256-SpoKw9IheCLHhltBYebCpx3h1wSSJkM3dVQniY3XGPY=" crossorigin="anonymous"></script>
+	
+
+</body>
+
+</html>
