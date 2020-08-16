@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+<meta itemprop="name" content="TiDB学习课程 - week1">
+<meta itemprop="description" content="最近非常想学习关于分布式系统的知识，碰巧 TiDB 官方推出了《高性能 TiDB 系列课程》，我就像捡到宝一样高兴😄呀。希望能够通过这次的课程有所收获，我一定会">
+<meta itemprop="datePublished" content="2020-08-16T11:58:45&#43;08:00" />
+<meta itemprop="dateModified" content="2020-08-16T11:58:45&#43;08:00" />
+<meta itemprop="wordCount" content="768">
+
+
+
+<meta itemprop="keywords" content="" /><meta property="og:title" content="TiDB学习课程 - week1" />
+<meta property="og:description" content="最近非常想学习关于分布式系统的知识，碰巧 TiDB 官方推出了《高性能 TiDB 系列课程》，我就像捡到宝一样高兴😄呀。希望能够通过这次的课程有所收获，我一定会" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://wangzeping722.github.io/posts/tidb-hello-transaction-week1/" />
+<meta property="article:published_time" content="2020-08-16T11:58:45+08:00" />
+<meta property="article:modified_time" content="2020-08-16T11:58:45+08:00" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="TiDB学习课程 - week1"/>
+<meta name="twitter:description" content="最近非常想学习关于分布式系统的知识，碰巧 TiDB 官方推出了《高性能 TiDB 系列课程》，我就像捡到宝一样高兴😄呀。希望能够通过这次的课程有所收获，我一定会"/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>TiDB学习课程 - week1</title>
+	<link rel="stylesheet" href="https://wangzeping722.github.io/css/style.min.eac77496566fd7d5768fd650ddb0b2b181ca6a2d7c5fdd6fe6b8ba4bf47e566f.css" integrity="sha256-6sd0llZv19V2j9ZQ3bCysYHKai18X91v5ri6S/R+Vm8=" crossorigin="anonymous">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://wangzeping722.github.io/">小王的杂货铺</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					
+				<a href="https://wangzeping722.github.io/posts/">文章</a>
+				<a href="https://wangzeping722.github.io/about/">关于</a>
+
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://github.com/wangzeping722" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title=""><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://wangzeping722.github.io/posts/">文章</a></li>
+			<li><a href="https://wangzeping722.github.io/about/">关于</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Aug 16, 2020</span></div>
+				<h1>TiDB学习课程 - week1</h1>
+			</header>
+			<div class="content">
+				<p>最近非常想学习关于分布式系统的知识，碰巧 TiDB 官方推出了《高性能 TiDB 系列课程》，我就像捡到宝一样高兴😄呀。希望能够通过这次的课程有所收获，我一定会坚持学完的。</p>
+<h2 id="题目描述">题目描述<a href="#题目描述" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<p>本地下载 TiDB，TiKV，PD 源代码，改写源码并编译部署以下环境：</p>
+<ul>
+<li>1 TiDB</li>
+<li>1 PD</li>
+<li>3 TiKV </li>
+</ul>
+<p>改写后：使得 TiDB 启动事务时，能打印出一个 “hello transaction” 的 日志 。</p>
+<h2 id="源码编译">源码编译<a href="#源码编译" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<p>我是在本地直接编译运行的，过程有些繁琐，当然也可以写一个 Dockerfile 来自动化部署啦。</p>
+<p>这三个项目的编译都非常简单，先把项目分别拉下来，然后分别进入每个项目下执行 make 就可以编译成功。编译后二进制的路径如下：</p>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">pd/bin/
+tidb/bin/
+tikv/target/debug/
+</code></pre></div><h2 id="部署">部署<a href="#部署" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<p>参考 <a href="https://github.com/tikv/tikv/blob/master/docs/how-to/deploy/using-binary.md">TiKV</a> 集群的部署方案就可以把 <code>PD</code> 和 <code>TiKV</code> 这两个组件部署成功，然后再单独部署一个 <code>TiDB</code> 节点就完成了作业的部署要求：</p>
+<ol>
+<li>
+<p>启动 PD</p>
+<div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh">./pd-server --name<span class="o">=</span>pd1 <span class="se">\
+</span><span class="se"></span>    --data-dir<span class="o">=</span>pd1 <span class="se">\
+</span><span class="se"></span>    --client-urls<span class="o">=</span><span class="s2">&#34;http://127.0.0.1:2379&#34;</span> <span class="se">\
+</span><span class="se"></span>    --peer-urls<span class="o">=</span><span class="s2">&#34;http://127.0.0.1:2380&#34;</span> <span class="se">\
+</span><span class="se"></span>    --initial-cluster<span class="o">=</span><span class="s2">&#34;pd1=http://127.0.0.1:2380&#34;</span> <span class="se">\
+</span><span class="se"></span>    --log-file<span class="o">=</span>pd1.log
+</code></pre></div></li>
+<li>
+<p>启动 TiKV 集群：在部署 TiKV 的时候遇到一个小问题【单进程的最大文件描述符不满足 TiKV 的需求】，所以需要改一下系统配置（MacOS）</p>
+<div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh"><span class="c1">#修改文件描述符大小</span>
+sudo launchctl limit maxfiles <span class="m">65536</span> <span class="m">200000</span>
+   
+./tikv-server --pd-endpoints<span class="o">=</span><span class="s2">&#34;127.0.0.1:2379&#34;</span> <span class="se">\
+</span><span class="se"></span>    --addr<span class="o">=</span><span class="s2">&#34;127.0.0.1:20160&#34;</span> <span class="se">\
+</span><span class="se"></span>    --data-dir<span class="o">=</span>tikv1 <span class="se">\
+</span><span class="se"></span>    --log-file<span class="o">=</span>tikv1.log
+   
+./tikv-server --pd-endpoints<span class="o">=</span><span class="s2">&#34;127.0.0.1:2379&#34;</span> <span class="se">\
+</span><span class="se"></span>    --addr<span class="o">=</span><span class="s2">&#34;127.0.0.1:20161&#34;</span> <span class="se">\
+</span><span class="se"></span>    --data-dir<span class="o">=</span>tikv2 <span class="se">\
+</span><span class="se"></span>    --log-file<span class="o">=</span>tikv2.log
+   
+./tikv-server --pd-endpoints<span class="o">=</span><span class="s2">&#34;127.0.0.1:2379&#34;</span> <span class="se">\
+</span><span class="se"></span>    --addr<span class="o">=</span><span class="s2">&#34;127.0.0.1:20162&#34;</span> <span class="se">\
+</span><span class="se"></span>    --data-dir<span class="o">=</span>tikv3 <span class="se">\
+</span><span class="se"></span>    --log-file<span class="o">=</span>tikv3.log
+</code></pre></div></li>
+<li>
+<p>启动 TiDB</p>
+<div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh">./tidb-server --store<span class="o">=</span>tikv --path<span class="o">=</span><span class="s1">&#39;127.0.0.1:2379&#39;</span> --log-file<span class="o">=</span>tidb.log
+</code></pre></div></li>
+</ol>
+<p>部署完之后，我们查看 tidb.log 这个日志，出现 <code>server is running MySQL protocol</code> 后，就是部署完成啦。</p>
+<h3 id="修改源码">修改源码<a href="#修改源码" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+<p>TiDB 的源码对新手来说算是非常友好的了，可以从<code>tidb-server</code>中的 main 函数开始一路追踪到连接建立和处理客户端请求的代码，简单易懂。下面给出流程，具体的以后找个时间分析分析：</p>
+<p>直到遇到了<code>session.go</code>中的这段代码，加上日志就算大功告成啦。</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// InitTxnWithStartTS create a transaction with startTS.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">session</span><span class="p">)</span> <span class="nf">InitTxnWithStartTS</span><span class="p">(</span><span class="nx">startTS</span> <span class="kt">uint64</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">s</span><span class="p">.</span><span class="nx">txn</span><span class="p">.</span><span class="nf">Valid</span><span class="p">(</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span>
+	<span class="p">}</span>
+
+	<span class="c1">// no need to get txn from txnFutureCh since txn should init with startTs
+</span><span class="c1"></span>  <span class="nx">logutil</span><span class="p">.</span><span class="nf">BgLogger</span><span class="p">(</span><span class="p">)</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;hello transaction&#34;</span><span class="p">)</span>
+	<span class="nx">txn</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nf">BeginWithStartTS</span><span class="p">(</span><span class="nx">startTS</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="nx">txn</span><span class="p">.</span><span class="nf">SetVars</span><span class="p">(</span><span class="nx">s</span><span class="p">.</span><span class="nx">sessionVars</span><span class="p">.</span><span class="nx">KVVars</span><span class="p">)</span>
+	<span class="nx">s</span><span class="p">.</span><span class="nx">txn</span><span class="p">.</span><span class="nf">changeInvalidToValid</span><span class="p">(</span><span class="nx">txn</span><span class="p">)</span>
+	<span class="nx">err</span> <span class="p">=</span> <span class="nx">s</span><span class="p">.</span><span class="nf">loadCommonGlobalVariablesIfNeeded</span><span class="p">(</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></div><p>重新编译运行 TiDB，你还会发现一个有意思的现象，那就是程序会狂打 <code>hello transaction</code>，这是因为 TiDB 后台会有一些定时任务在不断地开始事务执行一些操作。</p>
+<p>到这里，week1 的的作用就算大功告成啦。希望自己能坚持下来💪~~~</p>
+
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2020-08-16 11:58 &#43;0800</p>
+			</footer>
+		</article>
+		<div class="post-nav thin">
+			<a class="prev-post" href="https://wangzeping722.github.io/posts/dns-recording/">
+				<span class="post-nav-label">&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>DNS学习总结</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2020 <a href="https://wangzeping722.github.io/">小王的杂货铺</a> &#183; <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://wangzeping722.github.io/posts/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+
+	<script src="https://wangzeping722.github.io/js/bundle.min.4a9a0ac3d2217822c7865b4161e6c2a71de1d70492264337755427898dd718f6.js" integrity="sha256-SpoKw9IheCLHhltBYebCpx3h1wSSJkM3dVQniY3XGPY=" crossorigin="anonymous"></script>
+	
+
+</body>
+
+</html>

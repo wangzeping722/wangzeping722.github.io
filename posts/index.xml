@@ -6,8 +6,96 @@
 		<generator>Hugo -- gohugo.io</generator>
 		<language>zh</language>
 		<copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-		<lastBuildDate>Mon, 23 Dec 2019 10:36:05 +0800</lastBuildDate>
+		<lastBuildDate>Sun, 16 Aug 2020 11:58:45 +0800</lastBuildDate>
 		<atom:link href="https://wangzeping722.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+		
+		<item>
+			<title>TiDB学习课程 - week1</title>
+			<link>https://wangzeping722.github.io/posts/tidb-hello-transaction-week1/</link>
+			<pubDate>Sun, 16 Aug 2020 11:58:45 +0800</pubDate>
+			
+			<guid>https://wangzeping722.github.io/posts/tidb-hello-transaction-week1/</guid>
+			<description>最近非常想学习关于分布式系统的知识，碰巧 TiDB 官方推出了《高性能 TiDB 系列课程》，我就像捡到宝一样高兴😄呀。希望能够通过这次的课程有所收获，我一定会</description>
+			<content type="html"><![CDATA[<p>最近非常想学习关于分布式系统的知识，碰巧 TiDB 官方推出了《高性能 TiDB 系列课程》，我就像捡到宝一样高兴😄呀。希望能够通过这次的课程有所收获，我一定会坚持学完的。</p>
+<h2 id="题目描述">题目描述</h2>
+<p>本地下载 TiDB，TiKV，PD 源代码，改写源码并编译部署以下环境：</p>
+<ul>
+<li>1 TiDB</li>
+<li>1 PD</li>
+<li>3 TiKV </li>
+</ul>
+<p>改写后：使得 TiDB 启动事务时，能打印出一个 “hello transaction” 的 日志 。</p>
+<h2 id="源码编译">源码编译</h2>
+<p>我是在本地直接编译运行的，过程有些繁琐，当然也可以写一个 Dockerfile 来自动化部署啦。</p>
+<p>这三个项目的编译都非常简单，先把项目分别拉下来，然后分别进入每个项目下执行 make 就可以编译成功。编译后二进制的路径如下：</p>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">pd/bin/
+tidb/bin/
+tikv/target/debug/
+</code></pre></div><h2 id="部署">部署</h2>
+<p>参考 <a href="https://github.com/tikv/tikv/blob/master/docs/how-to/deploy/using-binary.md">TiKV</a> 集群的部署方案就可以把 <code>PD</code> 和 <code>TiKV</code> 这两个组件部署成功，然后再单独部署一个 <code>TiDB</code> 节点就完成了作业的部署要求：</p>
+<ol>
+<li>
+<p>启动 PD</p>
+<div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh">./pd-server --name<span class="o">=</span>pd1 <span class="se">\
+</span><span class="se"></span>    --data-dir<span class="o">=</span>pd1 <span class="se">\
+</span><span class="se"></span>    --client-urls<span class="o">=</span><span class="s2">&#34;http://127.0.0.1:2379&#34;</span> <span class="se">\
+</span><span class="se"></span>    --peer-urls<span class="o">=</span><span class="s2">&#34;http://127.0.0.1:2380&#34;</span> <span class="se">\
+</span><span class="se"></span>    --initial-cluster<span class="o">=</span><span class="s2">&#34;pd1=http://127.0.0.1:2380&#34;</span> <span class="se">\
+</span><span class="se"></span>    --log-file<span class="o">=</span>pd1.log
+</code></pre></div></li>
+<li>
+<p>启动 TiKV 集群：在部署 TiKV 的时候遇到一个小问题【单进程的最大文件描述符不满足 TiKV 的需求】，所以需要改一下系统配置（MacOS）</p>
+<div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh"><span class="c1">#修改文件描述符大小</span>
+sudo launchctl limit maxfiles <span class="m">65536</span> <span class="m">200000</span>
+   
+./tikv-server --pd-endpoints<span class="o">=</span><span class="s2">&#34;127.0.0.1:2379&#34;</span> <span class="se">\
+</span><span class="se"></span>    --addr<span class="o">=</span><span class="s2">&#34;127.0.0.1:20160&#34;</span> <span class="se">\
+</span><span class="se"></span>    --data-dir<span class="o">=</span>tikv1 <span class="se">\
+</span><span class="se"></span>    --log-file<span class="o">=</span>tikv1.log
+   
+./tikv-server --pd-endpoints<span class="o">=</span><span class="s2">&#34;127.0.0.1:2379&#34;</span> <span class="se">\
+</span><span class="se"></span>    --addr<span class="o">=</span><span class="s2">&#34;127.0.0.1:20161&#34;</span> <span class="se">\
+</span><span class="se"></span>    --data-dir<span class="o">=</span>tikv2 <span class="se">\
+</span><span class="se"></span>    --log-file<span class="o">=</span>tikv2.log
+   
+./tikv-server --pd-endpoints<span class="o">=</span><span class="s2">&#34;127.0.0.1:2379&#34;</span> <span class="se">\
+</span><span class="se"></span>    --addr<span class="o">=</span><span class="s2">&#34;127.0.0.1:20162&#34;</span> <span class="se">\
+</span><span class="se"></span>    --data-dir<span class="o">=</span>tikv3 <span class="se">\
+</span><span class="se"></span>    --log-file<span class="o">=</span>tikv3.log
+</code></pre></div></li>
+<li>
+<p>启动 TiDB</p>
+<div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh">./tidb-server --store<span class="o">=</span>tikv --path<span class="o">=</span><span class="s1">&#39;127.0.0.1:2379&#39;</span> --log-file<span class="o">=</span>tidb.log
+</code></pre></div></li>
+</ol>
+<p>部署完之后，我们查看 tidb.log 这个日志，出现 <code>server is running MySQL protocol</code> 后，就是部署完成啦。</p>
+<h3 id="修改源码">修改源码</h3>
+<p>TiDB 的源码对新手来说算是非常友好的了，可以从<code>tidb-server</code>中的 main 函数开始一路追踪到连接建立和处理客户端请求的代码，简单易懂。下面给出流程，具体的以后找个时间分析分析：</p>
+<p>直到遇到了<code>session.go</code>中的这段代码，加上日志就算大功告成啦。</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// InitTxnWithStartTS create a transaction with startTS.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">session</span><span class="p">)</span> <span class="nf">InitTxnWithStartTS</span><span class="p">(</span><span class="nx">startTS</span> <span class="kt">uint64</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">s</span><span class="p">.</span><span class="nx">txn</span><span class="p">.</span><span class="nf">Valid</span><span class="p">(</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span>
+	<span class="p">}</span>
+
+	<span class="c1">// no need to get txn from txnFutureCh since txn should init with startTs
+</span><span class="c1"></span>  <span class="nx">logutil</span><span class="p">.</span><span class="nf">BgLogger</span><span class="p">(</span><span class="p">)</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;hello transaction&#34;</span><span class="p">)</span>
+	<span class="nx">txn</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nf">BeginWithStartTS</span><span class="p">(</span><span class="nx">startTS</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="nx">txn</span><span class="p">.</span><span class="nf">SetVars</span><span class="p">(</span><span class="nx">s</span><span class="p">.</span><span class="nx">sessionVars</span><span class="p">.</span><span class="nx">KVVars</span><span class="p">)</span>
+	<span class="nx">s</span><span class="p">.</span><span class="nx">txn</span><span class="p">.</span><span class="nf">changeInvalidToValid</span><span class="p">(</span><span class="nx">txn</span><span class="p">)</span>
+	<span class="nx">err</span> <span class="p">=</span> <span class="nx">s</span><span class="p">.</span><span class="nf">loadCommonGlobalVariablesIfNeeded</span><span class="p">(</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></div><p>重新编译运行 TiDB，你还会发现一个有意思的现象，那就是程序会狂打 <code>hello transaction</code>，这是因为 TiDB 后台会有一些定时任务在不断地开始事务执行一些操作。</p>
+<p>到这里，week1 的的作用就算大功告成啦。希望自己能坚持下来💪~~~</p>
+]]></content>
+		</item>
 		
 		<item>
 			<title>DNS学习总结</title>

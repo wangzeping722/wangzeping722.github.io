@@ -7,10 +7,19 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>zh</language>
     <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-    <lastBuildDate>Mon, 23 Dec 2019 10:36:05 +0800</lastBuildDate>
+    <lastBuildDate>Sun, 16 Aug 2020 11:58:45 +0800</lastBuildDate>
     
 	<atom:link href="https://wangzeping722.github.io/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>TiDB学习课程 - week1</title>
+      <link>https://wangzeping722.github.io/posts/tidb-hello-transaction-week1/</link>
+      <pubDate>Sun, 16 Aug 2020 11:58:45 +0800</pubDate>
+      
+      <guid>https://wangzeping722.github.io/posts/tidb-hello-transaction-week1/</guid>
+      <description>最近非常想学习关于分布式系统的知识，碰巧 TiDB 官方推出了《高性能 TiDB 系列课程》，我就像捡到宝一样高兴😄呀。希望能够通过这次的课程有所收获，我一定会</description>
+    </item>
     
     <item>
       <title>DNS学习总结</title>
