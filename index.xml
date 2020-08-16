@@ -22,16 +22,7 @@
     </item>
     
     <item>
-      <title>Coredns 启动流程分析</title>
-      <link>https://wangzeping722.github.io/posts/coredns-startup/</link>
-      <pubDate>Thu, 12 Dec 2019 11:03:08 +0800</pubDate>
-      
-      <guid>https://wangzeping722.github.io/posts/coredns-startup/</guid>
-      <description>最近在看coredns的实现，它是基于 caddy 框架实现的，充分利用了 caddy 的插件功能。由于 coredns 大多数功能都是利用插件功能来实现的，所以整个项目的代码理解</description>
-    </item>
-    
-    <item>
-      <title>如何设计与实现WebCosole</title>
+      <title>如何设计与实现 WebConsole</title>
       <link>https://wangzeping722.github.io/posts/how-to-write-webconsole/</link>
       <pubDate>Wed, 04 Dec 2019 09:13:51 +0800</pubDate>
       
