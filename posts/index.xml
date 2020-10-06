@@ -6,8 +6,191 @@
 		<generator>Hugo -- gohugo.io</generator>
 		<language>zh</language>
 		<copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-		<lastBuildDate>Mon, 23 Dec 2019 10:36:05 +0800</lastBuildDate>
+		<lastBuildDate>Mon, 05 Oct 2020 11:42:50 +0800</lastBuildDate>
 		<atom:link href="https://wangzeping722.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+		
+		<item>
+			<title>Kratos 框架学习——启动流程分析</title>
+			<link>https://wangzeping722.github.io/posts/bilibili-kratos-1/</link>
+			<pubDate>Mon, 05 Oct 2020 11:42:50 +0800</pubDate>
+			
+			<guid>https://wangzeping722.github.io/posts/bilibili-kratos-1/</guid>
+			<description>Kratos 是 b 站开源的微服务框架，包含大量微服务相关框架及工具，同时整套Kratos框架也是不错的学习仓库，这个系列的文章将会对 Kratos 的源码进行学习和分</description>
+			<content type="html"><![CDATA[<p>Kratos 是 b 站开源的微服务框架，包含大量微服务相关框架及工具，同时整套Kratos框架也是不错的学习仓库，这个系列的文章将会对 Kratos 的源码进行学习和分析。</p>
+<p>如何安装和使用 kratos 框架就不在本文详细描述，请参考：<a href="https://go-kratos.github.io/kratos/#/quickstart">go-kratos</a></p>
+<h2 id="剖析-demo-启动流程">剖析 demo 启动流程</h2>
+<p>通过 wiki 中的指示，我们生成了一个 <strong>kratos-demo</strong> 的项目，目录结构如下：</p>
+<pre><code>├── CHANGELOG.md 
+├── OWNERS
+├── README.md
+├── api                     # api目录为对外保留的proto文件及生成的pb.go文件
+│   ├── api.bm.go
+│   ├── api.pb.go           # 通过go generate生成的pb.go文件
+│   ├── api.proto
+│   └── client.go
+├── cmd
+│   └── main.go             # cmd目录为main所在
+├── configs                 # configs为配置文件目录
+│   ├── application.toml    # 应用的自定义配置文件，可能是一些业务开关如：useABtest = true
+│   ├── db.toml             # db相关配置
+│   ├── grpc.toml           # grpc相关配置
+│   ├── http.toml           # http相关配置
+│   ├── memcache.toml       # memcache相关配置
+│   └── redis.toml          # redis相关配置
+├── go.mod
+├── go.sum
+└── internal                # internal为项目内部包，包括以下目录：
+│   ├── dao                 # dao层，用于数据库、cache、MQ、依赖某业务grpc|http等资源访问
+│   │   ├── dao.bts.go
+│   │   ├── dao.go
+│   │   ├── db.go
+│   │   ├── mc.cache.go
+│   │   ├── mc.go
+│   │   └── redis.go
+│   ├── di                  # 依赖注入层 采用wire静态分析依赖
+│   │   ├── app.go
+│   │   ├── wire.go         # wire 声明
+│   │   └── wire_gen.go     # go generate 生成的代码
+│   ├── model               # model层，用于声明业务结构体
+│   │   └── model.go
+│   ├── server              # server层，用于初始化grpc和http server
+│   │   ├── grpc            # grpc层，用于初始化grpc server和定义method
+│   │   │   └── server.go
+│   │   └── http            # http层，用于初始化http server和声明handler
+│   │       └── server.go
+│   └── service             # service层，用于业务逻辑处理，且为方便http和grpc共用方法，建议入参和出参保持grpc风格，且使用pb文件生成代码
+│       └── service.go
+└── test                    # 测试资源层 用于存放测试相关资源数据 如docker-compose配置 数据库初始化语句等
+    └── docker-compose.yaml
+</code></pre><p>不难看出，<code>cmd/main.go</code> 便是程序的入口，我们来看看 <code>cmd/main.go</code> 的代码：</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">main</span><span class="p">(</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">flag</span><span class="p">.</span><span class="nf">Parse</span><span class="p">(</span><span class="p">)</span>
+	<span class="nx">log</span><span class="p">.</span><span class="nf">Init</span><span class="p">(</span><span class="kc">nil</span><span class="p">)</span> <span class="c1">// debug flag: log.dir={path}
+</span><span class="c1"></span>	<span class="k">defer</span> <span class="nx">log</span><span class="p">.</span><span class="nf">Close</span><span class="p">(</span><span class="p">)</span>
+	<span class="nx">log</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;kratos-demo start&#34;</span><span class="p">)</span>
+	<span class="nx">paladin</span><span class="p">.</span><span class="nf">Init</span><span class="p">(</span><span class="p">)</span> <span class="c1">// 配置文件初始化
+</span><span class="c1"></span>	<span class="nx">_</span><span class="p">,</span> <span class="nx">closeFunc</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">di</span><span class="p">.</span><span class="nf">InitApp</span><span class="p">(</span><span class="p">)</span>	<span class="c1">// 初始化 App(),可以看成是一个微服务的实体对象, 利用编译期依赖注入,来初始化 app 中的各个组件
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="nx">c</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="nx">os</span><span class="p">.</span><span class="nx">Signal</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>	<span class="c1">// 实现优雅的退出
+</span><span class="c1"></span>	<span class="nx">signal</span><span class="p">.</span><span class="nf">Notify</span><span class="p">(</span><span class="nx">c</span><span class="p">,</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">SIGHUP</span><span class="p">,</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">SIGQUIT</span><span class="p">,</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">SIGTERM</span><span class="p">,</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">SIGINT</span><span class="p">)</span>
+	<span class="k">for</span> <span class="p">{</span>
+		<span class="nx">s</span> <span class="o">:=</span> <span class="o">&lt;-</span><span class="nx">c</span>
+		<span class="nx">log</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;get a signal %s&#34;</span><span class="p">,</span> <span class="nx">s</span><span class="p">.</span><span class="nf">String</span><span class="p">(</span><span class="p">)</span><span class="p">)</span>
+		<span class="k">switch</span> <span class="nx">s</span> <span class="p">{</span>
+		<span class="k">case</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">SIGQUIT</span><span class="p">,</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">SIGTERM</span><span class="p">,</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">SIGINT</span><span class="p">:</span>
+			<span class="nf">closeFunc</span><span class="p">(</span><span class="p">)</span>
+			<span class="nx">log</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;kratos-demo exit&#34;</span><span class="p">)</span>
+			<span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
+			<span class="k">return</span>
+		<span class="k">case</span> <span class="nx">syscall</span><span class="p">.</span><span class="nx">SIGHUP</span><span class="p">:</span>
+		<span class="k">default</span><span class="p">:</span>
+			<span class="k">return</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div><p>整个流程是非常的清楚：</p>
+<ol>
+<li>初始化日志；</li>
+<li>初始化配置；</li>
+<li>初始化 App（调用编译期依赖注入生成的方法 NewApp），这一步之后就能够对外提供服务了；</li>
+<li>最后实现了优雅的关闭和重启。</li>
+</ol>
+<h2 id="编译期依赖注入">编译期依赖注入</h2>
+<p>Kratos 框架使用 <a href="https://github.com/google/wire">wire</a> 进行编译期依赖注入，使得各个模块之间保持低耦合。如何使用 wire，本文不做说明，下面直接看 demo 是如何使用这个技术的。</p>
+<p><code>di.InitApp()</code> 就是利用编译期注入生成的函数，而这个函数的目的就是组合初始化 <code>App</code> 所需要的一切资源，初始化并返回 <code>App</code> 对象。</p>
+<p>首先我们可以看见在 <code>internal/dao/dao.go</code> 和 <code>internal/service/service.go</code> 文件中各看见一个 Provider：</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">var</span> <span class="nx">Provider</span> <span class="p">=</span> <span class="nx">wire</span><span class="p">.</span><span class="nf">NewSet</span><span class="p">(</span><span class="nx">New</span><span class="p">,</span> <span class="nx">NewDB</span><span class="p">,</span> <span class="nx">NewRedis</span><span class="p">,</span> <span class="nx">NewMC</span><span class="p">)</span>
+<span class="kd">var</span> <span class="nx">Provider</span> <span class="p">=</span> <span class="nx">wire</span><span class="p">.</span><span class="nf">NewSet</span><span class="p">(</span><span class="nx">New</span><span class="p">,</span> <span class="nx">wire</span><span class="p">.</span><span class="nf">Bind</span><span class="p">(</span><span class="nb">new</span><span class="p">(</span><span class="nx">pb</span><span class="p">.</span><span class="nx">DemoServer</span><span class="p">)</span><span class="p">,</span> <span class="nb">new</span><span class="p">(</span><span class="o">*</span><span class="nx">Service</span><span class="p">)</span><span class="p">)</span><span class="p">)</span>
+</code></pre></div><p>在 <code>internal/di/wire.go</code> 我们又看见了下面这段代码：</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">//go:generate kratos t wire
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">InitApp</span><span class="p">(</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">App</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="p">)</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nb">panic</span><span class="p">(</span><span class="nx">wire</span><span class="p">.</span><span class="nf">Build</span><span class="p">(</span><span class="nx">dao</span><span class="p">.</span><span class="nx">Provider</span><span class="p">,</span> <span class="nx">service</span><span class="p">.</span><span class="nx">Provider</span><span class="p">,</span> <span class="nx">http</span><span class="p">.</span><span class="nx">New</span><span class="p">,</span> <span class="nx">grpc</span><span class="p">.</span><span class="nx">New</span><span class="p">,</span> <span class="nx">NewApp</span><span class="p">)</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div><p>注意，我们看见了会使用<code>go:generate kratos t wire</code>这段生成命令来生成代码</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">InitApp</span><span class="p">(</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">App</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="p">)</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">redis</span><span class="p">,</span> <span class="nx">cleanup</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">dao</span><span class="p">.</span><span class="nf">NewRedis</span><span class="p">(</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="nx">memcache</span><span class="p">,</span> <span class="nx">cleanup2</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">dao</span><span class="p">.</span><span class="nf">NewMC</span><span class="p">(</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nf">cleanup</span><span class="p">(</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="nx">db</span><span class="p">,</span> <span class="nx">cleanup3</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">dao</span><span class="p">.</span><span class="nf">NewDB</span><span class="p">(</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nf">cleanup2</span><span class="p">(</span><span class="p">)</span>
+		<span class="nf">cleanup</span><span class="p">(</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="nx">daoDao</span><span class="p">,</span> <span class="nx">cleanup4</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">dao</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="nx">redis</span><span class="p">,</span> <span class="nx">memcache</span><span class="p">,</span> <span class="nx">db</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nf">cleanup3</span><span class="p">(</span><span class="p">)</span>
+		<span class="nf">cleanup2</span><span class="p">(</span><span class="p">)</span>
+		<span class="nf">cleanup</span><span class="p">(</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="nx">serviceService</span><span class="p">,</span> <span class="nx">cleanup5</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">service</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="nx">daoDao</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nf">cleanup4</span><span class="p">(</span><span class="p">)</span>
+		<span class="nf">cleanup3</span><span class="p">(</span><span class="p">)</span>
+		<span class="nf">cleanup2</span><span class="p">(</span><span class="p">)</span>
+		<span class="nf">cleanup</span><span class="p">(</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="nx">engine</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">http</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="nx">serviceService</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nf">cleanup5</span><span class="p">(</span><span class="p">)</span>
+		<span class="nf">cleanup4</span><span class="p">(</span><span class="p">)</span>
+		<span class="nf">cleanup3</span><span class="p">(</span><span class="p">)</span>
+		<span class="nf">cleanup2</span><span class="p">(</span><span class="p">)</span>
+		<span class="nf">cleanup</span><span class="p">(</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="nx">server</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">grpc</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="nx">serviceService</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nf">cleanup5</span><span class="p">(</span><span class="p">)</span>
+		<span class="nf">cleanup4</span><span class="p">(</span><span class="p">)</span>
+		<span class="nf">cleanup3</span><span class="p">(</span><span class="p">)</span>
+		<span class="nf">cleanup2</span><span class="p">(</span><span class="p">)</span>
+		<span class="nf">cleanup</span><span class="p">(</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="nx">app</span><span class="p">,</span> <span class="nx">cleanup6</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">NewApp</span><span class="p">(</span><span class="nx">serviceService</span><span class="p">,</span> <span class="nx">engine</span><span class="p">,</span> <span class="nx">server</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nf">cleanup5</span><span class="p">(</span><span class="p">)</span>
+		<span class="nf">cleanup4</span><span class="p">(</span><span class="p">)</span>
+		<span class="nf">cleanup3</span><span class="p">(</span><span class="p">)</span>
+		<span class="nf">cleanup2</span><span class="p">(</span><span class="p">)</span>
+		<span class="nf">cleanup</span><span class="p">(</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">app</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nf">cleanup6</span><span class="p">(</span><span class="p">)</span>
+		<span class="nf">cleanup5</span><span class="p">(</span><span class="p">)</span>
+		<span class="nf">cleanup4</span><span class="p">(</span><span class="p">)</span>
+		<span class="nf">cleanup3</span><span class="p">(</span><span class="p">)</span>
+		<span class="nf">cleanup2</span><span class="p">(</span><span class="p">)</span>
+		<span class="nf">cleanup</span><span class="p">(</span><span class="p">)</span>
+	<span class="p">}</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></div><p>把上面的逻辑串起来就是：</p>
+<ol>
+<li>dao.NewRedis()</li>
+<li>dao.NewMC()</li>
+<li>dao.NewDB()</li>
+<li>dao.New(redis, memcache, db)</li>
+<li>service.New(daoDao)</li>
+<li>http.New(serviceService)</li>
+<li>grpc.New(serviceService)</li>
+<li>NewApp(serviceService, engine, server)</li>
+</ol>
+<p>至此，依赖注入完成。</p>
+<p>其实整个微服务的启动流程也是非常简单的，接下来的文章中我就重点分析比较感兴趣的点。</p>
+]]></content>
+		</item>
 		
 		<item>
 			<title>DNS学习总结</title>
