@@ -7,18 +7,18 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>zh</language>
     <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-    <lastBuildDate>Mon, 05 Oct 2020 11:42:50 +0800</lastBuildDate>
+    <lastBuildDate>Thu, 29 Oct 2020 09:56:05 +0800</lastBuildDate>
     
 	<atom:link href="https://wangzeping722.github.io/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
-      <title>Kratos 框架学习——启动流程分析</title>
-      <link>https://wangzeping722.github.io/posts/bilibili-kratos-1/</link>
-      <pubDate>Mon, 05 Oct 2020 11:42:50 +0800</pubDate>
+      <title>gRPC Resolver 原理</title>
+      <link>https://wangzeping722.github.io/posts/grpc-resolver/</link>
+      <pubDate>Thu, 29 Oct 2020 09:56:05 +0800</pubDate>
       
-      <guid>https://wangzeping722.github.io/posts/bilibili-kratos-1/</guid>
-      <description>Kratos 是 b 站开源的微服务框架，包含大量微服务相关框架及工具，同时整套Kratos框架也是不错的学习仓库，这个系列的文章将会对 Kratos 的源码进行学习和分</description>
+      <guid>https://wangzeping722.github.io/posts/grpc-resolver/</guid>
+      <description>1. 前言 gRPC Resolver 是 gRPC 的核心功能之一，与 gRPC Balancer 一起负责 gRPC 调用其它服务时的负载均衡。gRPC 负载均衡是针对每次请求，而不是连接，这样可以保证服务端负载的</description>
     </item>
     
     <item>
@@ -45,7 +45,7 @@
       <pubDate>Mon, 18 Nov 2019 10:51:34 +0800</pubDate>
       
       <guid>https://wangzeping722.github.io/about/</guid>
-      <description>生活应该充满希望充满爱。</description>
+      <description>古人学问无遗力 少壮工夫老始成。 纸上得来终觉浅 绝知此事要躬行。</description>
     </item>
     
   </channel>
