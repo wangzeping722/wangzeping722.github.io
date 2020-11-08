@@ -1,22 +1,78 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-	<channel>
-		<title>Posts on 给我一条鱼🐟</title>
-		<link>https://wangzeping722.github.io/posts/</link>
-		<description>Recent content in Posts on 给我一条鱼🐟</description>
-		<generator>Hugo -- gohugo.io</generator>
-		<language>zh</language>
-		<copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-		<lastBuildDate>Fri, 06 Nov 2020 18:07:55 +0800</lastBuildDate>
-		<atom:link href="https://wangzeping722.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
-		
-		<item>
-			<title>gRPC Balancer 分析</title>
-			<link>https://wangzeping722.github.io/posts/grpc-balancer/</link>
-			<pubDate>Fri, 06 Nov 2020 18:07:55 +0800</pubDate>
-			
-			<guid>https://wangzeping722.github.io/posts/grpc-balancer/</guid>
-			<description>1. 负载均衡 gRPC 实现负载均衡的方法主要有三种，分别是 集中式 LB（Proxy Model） 进程内 LB（Balancing-aware Client） 独</description>
-			<content type="html"><![CDATA[<h2 id="1-负载均衡">1. 负载均衡</h2>
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+<meta itemprop="name" content="gRPC Balancer 分析">
+<meta itemprop="description" content="1. 负载均衡 gRPC 实现负载均衡的方法主要有三种，分别是 集中式 LB（Proxy Model） 进程内 LB（Balancing-aware Client） 独">
+<meta itemprop="datePublished" content="2020-11-06T18:07:55&#43;08:00" />
+<meta itemprop="dateModified" content="2020-11-06T18:07:55&#43;08:00" />
+<meta itemprop="wordCount" content="5476">
+
+
+
+<meta itemprop="keywords" content="" /><meta property="og:title" content="gRPC Balancer 分析" />
+<meta property="og:description" content="1. 负载均衡 gRPC 实现负载均衡的方法主要有三种，分别是 集中式 LB（Proxy Model） 进程内 LB（Balancing-aware Client） 独" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://wangzeping722.github.io/posts/grpc-balancer/" />
+<meta property="article:published_time" content="2020-11-06T18:07:55+08:00" />
+<meta property="article:modified_time" content="2020-11-06T18:07:55+08:00" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="gRPC Balancer 分析"/>
+<meta name="twitter:description" content="1. 负载均衡 gRPC 实现负载均衡的方法主要有三种，分别是 集中式 LB（Proxy Model） 进程内 LB（Balancing-aware Client） 独"/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>gRPC Balancer 分析</title>
+	<link rel="stylesheet" href="https://wangzeping722.github.io/css/style.min.eac77496566fd7d5768fd650ddb0b2b181ca6a2d7c5fdd6fe6b8ba4bf47e566f.css" integrity="sha256-6sd0llZv19V2j9ZQ3bCysYHKai18X91v5ri6S/R+Vm8=" crossorigin="anonymous">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://wangzeping722.github.io/">给我一条鱼🐟</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					
+				<a href="https://wangzeping722.github.io/posts/">文章</a>
+				<a href="https://wangzeping722.github.io/about/">关于</a>
+
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://github.com/wangzeping722" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title=""><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://wangzeping722.github.io/posts/">文章</a></li>
+			<li><a href="https://wangzeping722.github.io/about/">关于</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Nov 6, 2020</span></div>
+				<h1>gRPC Balancer 分析</h1>
+			</header>
+			<div class="content">
+				<h2 id="1-负载均衡">1. 负载均衡<a href="#1-负载均衡" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 <p>gRPC 实现负载均衡的方法主要有三种，分别是</p>
 <ul>
 <li>集中式 LB（Proxy Model）</li>
@@ -32,7 +88,7 @@
 <li>负载均衡器（Balancer）为每一个后端地址创建一个子连接（SubConn）</li>
 <li>当要发起 RPC 请求的时候，负载均衡器就会选择当前最匹配的子连接来进行 RCP 调用</li>
 </ol>
-<h2 id="2-问题">2. 问题</h2>
+<h2 id="2-问题">2. 问题<a href="#2-问题" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 <p>今后有关代码剖析的文章都会提出问题，带着问题来看源码，收获会更多：</p>
 <ul>
 <li>Balancer 如何接收来自 Resolver 解析出来的地址？</li>
@@ -42,7 +98,7 @@
 <p><a href="https://github.com/grpc/proposal/blob/master/L9-go-resolver-balancer-API.md">L9-go-resolver-balancer-API</a>这篇文章中给出了 resolver-balancer 的设计理念，并且给出了官方架构图：</p>
 <p><img src="https://blog-wero.oss-cn-shanghai.aliyuncs.com/img/resolver-balancer-arch.png" alt="resolver-balancer"></p>
 <p>图中，我们可以看见 Balancer 位于 gRPC 的右方，并且 Resolver 与 Balancer 没有耦合在一起，而是采用接口隔离加 Builder 和Wrapper 设计模式。其中，Balancer 负责与后端服务器建立连接，并且创建 Picker 来执行负载均衡的逻辑。</p>
-<h2 id="3-一切都要从-resolver-说起">3. 一切都要从 Resolver 说起</h2>
+<h2 id="3-一切都要从-resolver-说起">3. 一切都要从 Resolver 说起<a href="#3-一切都要从-resolver-说起" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 <p>上文，我们提到 Resolver 在解析到后端服务器列表之后会通过 <code>resolver.ClientConn.UpdateState(state)</code>来通知 gRPC 后端地址有更新，对应上图的左边 <code>Addr Updates</code>。代码如下：</p>
 <div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// ccResolverWrapper 可以看做是 Resolver 的代理，并且实现了resolver.ClientConn接口
 </span><span class="c1"></span><span class="kd">type</span> <span class="nx">ccResolverWrapper</span> <span class="kd">struct</span> <span class="p">{</span>
@@ -75,7 +131,7 @@
 <p>以 dnsResolver 为例，调用链如下：</p>
 <div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh">dnsResovler.watcher --&gt; ccResolverWrapper.UpdateState --&gt; ClientConn.updateResolverState
 --&gt;  cc.balancerWrapper.updateClientConnState
-</code></pre></div><h3 id="clientconnupdateresolverstate">ClientConn.updateResolverState</h3>
+</code></pre></div><h3 id="clientconnupdateresolverstate">ClientConn.updateResolverState<a href="#clientconnupdateresolverstate" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
 <p>updateResolverState 会与 Balancer 模块进行交互：</p>
 <div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">cc</span> <span class="o">*</span><span class="nx">ClientConn</span><span class="p">)</span> <span class="nf">updateResolverState</span><span class="p">(</span><span class="nx">s</span> <span class="nx">resolver</span><span class="p">.</span><span class="nx">State</span><span class="p">,</span> <span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
 	<span class="k">defer</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">firstResolveEvent</span><span class="p">.</span><span class="nf">Fire</span><span class="p">(</span><span class="p">)</span>
@@ -263,9 +319,9 @@
 </li>
 </ol>
 <p>在完成负载均衡策略的初始化或切换之后，会调用<code>bw.updateClientConnState(&amp;balancer.ClientConnState{ResolverState: s, BalancerConfig: balCfg})</code> 来更新连接的状态（bw 就是 balancerWrapper），这个方法在后面会解析。</p>
-<h2 id="4-balancer-分析">4. Balancer 分析</h2>
+<h2 id="4-balancer-分析">4. Balancer 分析<a href="#4-balancer-分析" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 <p>Balancer 包的结构跟 Resolver 的包结构类似，都是采用 Builder + Wrapper 设计模式相结合，使用者只需要实现自己的 Balancer，然后再以插件的形式注册到 gRPC 中就可以与其他模块配合使用。</p>
-<h3 id="newccbalancerwrapper">newCCBalancerWrapper</h3>
+<h3 id="newccbalancerwrapper">newCCBalancerWrapper<a href="#newccbalancerwrapper" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
 <p>新建一个 ccBalancerWrapper，并且和 ccResolverWrapper 一样，存储到 <code>ClientConn</code> 的 <code>balancerWrapper</code> 中：</p>
 <div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">newCCBalancerWrapper</span><span class="p">(</span><span class="nx">cc</span> <span class="o">*</span><span class="nx">ClientConn</span><span class="p">,</span> <span class="nx">b</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">Builder</span><span class="p">,</span> <span class="nx">bopts</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">BuildOptions</span><span class="p">)</span> <span class="o">*</span><span class="nx">ccBalancerWrapper</span> <span class="p">{</span>
 	<span class="c1">// 初始化实例
@@ -281,7 +337,7 @@
 </span><span class="c1"></span>	<span class="nx">ccb</span><span class="p">.</span><span class="nx">balancer</span> <span class="p">=</span> <span class="nx">b</span><span class="p">.</span><span class="nf">Build</span><span class="p">(</span><span class="nx">ccb</span><span class="p">,</span> <span class="nx">bopts</span><span class="p">)</span>
 	<span class="k">return</span> <span class="nx">ccb</span>
 <span class="p">}</span>
-</code></pre></div><h3 id="ccbalancerwrapperwatcher">ccBalancerWrapper.watcher</h3>
+</code></pre></div><h3 id="ccbalancerwrapperwatcher">ccBalancerWrapper.watcher<a href="#ccbalancerwrapperwatcher" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
 <p>在创建 ccBalancerWrapper 会启动一个goroutine 来执行 watcher 方法，那 <em>watcher</em> 的作用是什么呢？</p>
 <div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// watcher balancer functions sequentially, so the balancer can be implemented
 </span><span class="c1"></span><span class="c1">// lock-free.
@@ -315,7 +371,7 @@
 	<span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div><p>从代码的注释中，我们可以知道为什么要专门启动一个 goroutine 来执行 watcher 方法：为了监听服务器地址的更新和状态变化，并且让 balancer 实现无锁更新，后文会详细讲解。</p>
-<h3 id="balancerbuilder">balancer.Builder</h3>
+<h3 id="balancerbuilder">balancer.Builder<a href="#balancerbuilder" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
 <p>和 Resolver 一样，在实现 Balancer 的组件的同时也要实现一个 Builder，用来构建 Balancer 实例。以 <code>grpclb</code> 负载均衡器为例：</p>
 <div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">lbBuilder</span><span class="p">)</span> <span class="nf">Build</span><span class="p">(</span><span class="nx">cc</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">ClientConn</span><span class="p">,</span> <span class="nx">opt</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">BuildOptions</span><span class="p">)</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">Balancer</span> <span class="p">{</span>
 	<span class="c1">// This generates a manual resolver builder with a fixed scheme. This
@@ -345,7 +401,7 @@
 
 	<span class="k">return</span> <span class="nx">lb</span>
 <span class="p">}</span>
-</code></pre></div><h3 id="balancer-接口">Balancer 接口</h3>
+</code></pre></div><h3 id="balancer-接口">Balancer 接口<a href="#balancer-接口" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
 <p>我们再来看看 Balancer 都有哪些方法：</p>
 <div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Balancer takes input from gRPC, manages SubConns, and collects and aggregates
 </span><span class="c1"></span><span class="c1">// the connectivity states.
@@ -367,7 +423,7 @@
 	
 	<span class="nf">Close</span><span class="p">(</span><span class="p">)</span>
 <span class="p">}</span>
-</code></pre></div><h3 id="lbbalancerupdateclientconnstate">lbBalancer.UpdateClientConnState</h3>
+</code></pre></div><h3 id="lbbalancerupdateclientconnstate">lbBalancer.UpdateClientConnState<a href="#lbbalancerupdateclientconnstate" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
 <p>UpdateClientConnState 是如何被调用的呢？原来是通过前文提到的 <code>bw.updateClientConnState</code> 来间接调用的，由 Resolver 到 ClientConn，再到 Balancer，在下面的调用链中一览无余：</p>
 <div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">ccResolverWrapper</span><span class="p">.</span><span class="nx">UpdateState</span> <span class="o">-</span><span class="p">&gt;</span> <span class="nx">ClientConn</span><span class="p">.</span><span class="nx">updateResolverState</span> <span class="o">-</span><span class="p">&gt;</span> <span class="nx">ccBalancerWrapper</span><span class="p">.</span><span class="nx">updateClientConnState</span> <span class="o">-</span><span class="p">&gt;</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">Balancer</span><span class="p">.</span><span class="nx">UpdateClientConnState</span>
 </code></pre></div><p>上面的调用关系中不涉及到具体的实现，我们来看看 <code>lbBalancer.UpdateClientConnState</code> 是如何实现的：</p>
@@ -435,7 +491,7 @@
 	<span class="k">return</span> <span class="kc">nil</span>
 <span class="p">}</span>
 </code></pre></div><p>lbBalancer 把地址分为两种类型：<code>resolver.GRPCLB</code>，<code>resolver.Backend</code>。当 dnsResolver 传过来的地址列表中有 resolver.GRPCLB，lbBalancer 会与<code>resolver.GRPCLB</code>的负载均衡器建立连接以获取真正服务的地址。不过，我们在这里并不做深究。</p>
-<h3 id="lbbalancernewremotebalancerccwrapper">lbBalancer.newRemoteBalancerCCWrapper</h3>
+<h3 id="lbbalancernewremotebalancerccwrapper">lbBalancer.newRemoteBalancerCCWrapper<a href="#lbbalancernewremotebalancerccwrapper" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
 <div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">lb</span> <span class="o">*</span><span class="nx">lbBalancer</span><span class="p">)</span> <span class="nf">refreshSubConns</span><span class="p">(</span><span class="nx">backendAddrs</span> <span class="p">[</span><span class="p">]</span><span class="nx">resolver</span><span class="p">.</span><span class="nx">Address</span><span class="p">,</span> <span class="nx">fallback</span> <span class="kt">bool</span><span class="p">,</span> <span class="nx">pickFirst</span> <span class="kt">bool</span><span class="p">)</span> <span class="p">{</span>
 	<span class="nx">opts</span> <span class="o">:=</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">NewSubConnOptions</span><span class="p">{</span><span class="p">}</span>
 	<span class="k">if</span> <span class="p">!</span><span class="nx">fallback</span> <span class="p">{</span>
@@ -542,7 +598,7 @@
 </span><span class="c1"></span>	<span class="c1">// 更新 lb 的状态, 并且重新生成 Picker
 </span><span class="c1"></span>	<span class="nx">lb</span><span class="p">.</span><span class="nf">updateStateAndPicker</span><span class="p">(</span><span class="kc">true</span><span class="p">,</span> <span class="kc">true</span><span class="p">)</span>
 <span class="p">}</span>
-</code></pre></div><h3 id="lbbalancerupdatestateandpicker">lbBalancer.updateStateAndPicker</h3>
+</code></pre></div><h3 id="lbbalancerupdatestateandpicker">lbBalancer.updateStateAndPicker<a href="#lbbalancerupdatestateandpicker" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
 <div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">lb</span> <span class="o">*</span><span class="nx">lbBalancer</span><span class="p">)</span> <span class="nf">updateStateAndPicker</span><span class="p">(</span><span class="nx">forceRegeneratePicker</span> <span class="kt">bool</span><span class="p">,</span> <span class="nx">resetDrop</span> <span class="kt">bool</span><span class="p">)</span> <span class="p">{</span>
 	<span class="nx">oldAggrState</span> <span class="o">:=</span> <span class="nx">lb</span><span class="p">.</span><span class="nx">state</span>
 	<span class="nx">lb</span><span class="p">.</span><span class="nx">state</span> <span class="p">=</span> <span class="nx">lb</span><span class="p">.</span><span class="nf">aggregateSubConnStates</span><span class="p">(</span><span class="p">)</span>
@@ -556,7 +612,7 @@
 
 	<span class="nx">lb</span><span class="p">.</span><span class="nx">cc</span><span class="p">.</span><span class="nf">UpdateState</span><span class="p">(</span><span class="nx">balancer</span><span class="p">.</span><span class="nx">State</span><span class="p">{</span><span class="nx">ConnectivityState</span><span class="p">:</span> <span class="nx">lb</span><span class="p">.</span><span class="nx">state</span><span class="p">,</span> <span class="nx">Picker</span><span class="p">:</span> <span class="nx">lb</span><span class="p">.</span><span class="nx">picker</span><span class="p">}</span><span class="p">)</span>
 <span class="p">}</span>
-</code></pre></div><h3 id="lbbalancerregeneratepicker">lbBalancer.regeneratePicker</h3>
+</code></pre></div><h3 id="lbbalancerregeneratepicker">lbBalancer.regeneratePicker<a href="#lbbalancerregeneratepicker" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
 <div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">lb</span> <span class="o">*</span><span class="nx">lbBalancer</span><span class="p">)</span> <span class="nf">regeneratePicker</span><span class="p">(</span><span class="nx">resetDrop</span> <span class="kt">bool</span><span class="p">)</span> <span class="p">{</span>
   <span class="c1">// 创建 errpicker
 </span><span class="c1"></span>	<span class="k">if</span> <span class="nx">lb</span><span class="p">.</span><span class="nx">state</span> <span class="o">==</span> <span class="nx">connectivity</span><span class="p">.</span><span class="nx">TransientFailure</span> <span class="p">{</span>
@@ -615,7 +671,7 @@
   <span class="c1">// 更新 SubConn
 </span><span class="c1"></span>	<span class="nx">prevLBPicker</span><span class="p">.</span><span class="nf">updateReadySCs</span><span class="p">(</span><span class="nx">readySCs</span><span class="p">)</span>
 <span class="p">}</span>
-</code></pre></div><h2 id="5-后端服务建立连接">5. 后端服务建立连接</h2>
+</code></pre></div><h2 id="5-后端服务建立连接">5. 后端服务建立连接<a href="#5-后端服务建立连接" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 <p>虽然前面剖析了 Balancer 的实现原理，但我们却并不知道与后端服务的连接是在哪里建立的，答案就在 <code>ClientConn.NewSubConn</code>中：</p>
 <div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">ccb</span> <span class="o">*</span><span class="nx">ccBalancerWrapper</span><span class="p">)</span> <span class="nf">NewSubConn</span><span class="p">(</span><span class="nx">addrs</span> <span class="p">[</span><span class="p">]</span><span class="nx">resolver</span><span class="p">.</span><span class="nx">Address</span><span class="p">,</span> <span class="nx">opts</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">NewSubConnOptions</span><span class="p">)</span> <span class="p">(</span><span class="nx">balancer</span><span class="p">.</span><span class="nx">SubConn</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
 	<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">addrs</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="p">{</span>
@@ -675,7 +731,7 @@
 	<span class="nx">cc</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">(</span><span class="p">)</span>
 	<span class="k">return</span> <span class="nx">ac</span><span class="p">,</span> <span class="kc">nil</span>
 <span class="p">}</span>
-</code></pre></div><h3 id="acbalancerwrapper">acBalancerWrapper</h3>
+</code></pre></div><h3 id="acbalancerwrapper">acBalancerWrapper<a href="#acbalancerwrapper" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
 <p>acBalancerWrapper 是 addrConn 的 wrapper，实现了 SubConn 接口：</p>
 <div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// acBalancerWrapper is a wrapper on top of ac for balancers.
 </span><span class="c1"></span><span class="c1">// It implements balancer.SubConn interface.
@@ -745,7 +801,7 @@
 </span><span class="c1"></span>	<span class="k">go</span> <span class="nx">ac</span><span class="p">.</span><span class="nf">resetTransport</span><span class="p">(</span><span class="p">)</span>
 	<span class="k">return</span> <span class="kc">nil</span>
 <span class="p">}</span>
-</code></pre></div><h3 id="addrconnupdateconnectivitystate">addrConn.updateConnectivityState</h3>
+</code></pre></div><h3 id="addrconnupdateconnectivitystate">addrConn.updateConnectivityState<a href="#addrconnupdateconnectivitystate" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
 <div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">ac</span> <span class="o">*</span><span class="nx">addrConn</span><span class="p">)</span> <span class="nf">updateConnectivityState</span><span class="p">(</span><span class="nx">s</span> <span class="nx">connectivity</span><span class="p">.</span><span class="nx">State</span><span class="p">,</span> <span class="nx">lastErr</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
    <span class="k">if</span> <span class="nx">ac</span><span class="p">.</span><span class="nx">state</span> <span class="o">==</span> <span class="nx">s</span> <span class="p">{</span>
       <span class="k">return</span>
@@ -795,7 +851,7 @@
 	<span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div><p>哈哈，我们又回到了这里。看来 watcher 方法的工作就是监听子连接的状态变化，并且调用 <code>balancer.UpdateSubConnState</code> 来执行更新操作。</p>
-<h3 id="balancerupdatesubconnstate">balancer.UpdateSubConnState</h3>
+<h3 id="balancerupdatesubconnstate">balancer.UpdateSubConnState<a href="#balancerupdatesubconnstate" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
 <div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">lb</span> <span class="o">*</span><span class="nx">lbBalancer</span><span class="p">)</span> <span class="nf">UpdateSubConnState</span><span class="p">(</span><span class="nx">sc</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">SubConn</span><span class="p">,</span> <span class="nx">scs</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">SubConnState</span><span class="p">)</span> <span class="p">{</span>
 	<span class="nx">s</span> <span class="o">:=</span> <span class="nx">scs</span><span class="p">.</span><span class="nx">ConnectivityState</span>
 	<span class="k">if</span> <span class="nx">logger</span><span class="p">.</span><span class="nf">V</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
@@ -835,596 +891,39 @@
 		<span class="p">}</span>
 	<span class="p">}</span>
 <span class="p">}</span>
-</code></pre></div><h2 id="6-总结">6. 总结</h2>
+</code></pre></div><h2 id="6-总结">6. 总结<a href="#6-总结" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 <p>设计者为了让 Resolver ，Balancer 实现解耦，可谓是煞费苦心，而且也实现的十分优秀。当然 dnsBalancer 的实现相对来说有点复杂，如果没有使用过 grpclb 的话，理解起来会有点困难，不过这并不影响我们学习 Balancer 的设计思想，下面是调用关系总结：</p>
 <p><img src="https://blog-wero.oss-cn-shanghai.aliyuncs.com/img/resolver-balancer-clientconn%E4%BA%A4%E4%BA%92%E6%B5%81%E7%A8%8B.png" alt=""></p>
 <p>咱们下篇文章见！</p>
-]]></content>
-		</item>
-		
-		<item>
-			<title>go-zero 源码分析计划</title>
-			<link>https://wangzeping722.github.io/posts/go-zero/</link>
-			<pubDate>Fri, 06 Nov 2020 13:03:49 +0800</pubDate>
-			
-			<guid>https://wangzeping722.github.io/posts/go-zero/</guid>
-			<description>go-zero 是一个集成了各种工程实践的 web 和 rpc 框架。通过弹性设计保障了大并发服务端的稳定性，经受了充分的实战检验。 go-zero 包含极简的 API 定义和生成工具 goctl</description>
-			<content type="html"><![CDATA[<p><a href="https://github.com/tal-tech/go-zero">go-zero</a> 是一个集成了各种工程实践的 web 和 rpc 框架。通过弹性设计保障了大并发服务端的稳定性，经受了充分的实战检验。</p>
-<p>go-zero 包含极简的 API 定义和生成工具 goctl，可以根据定义的 api 文件一键生成 Go, iOS, Android, Kotlin, Dart, TypeScript, JavaScript 代码，并可直接运行。</p>
-<p>使用 go-zero 的好处：</p>
-<ul>
-<li>轻松获得支撑千万日活服务的稳定性</li>
-<li>内建级联超时控制、限流、自适应熔断、自适应降载等微服务治理能力，无需配置和额外代码</li>
-<li>微服务治理中间件可无缝集成到其它现有框架使用</li>
-<li>极简的 API 描述，一键生成各端代码</li>
-<li>自动校验客户端请求参数合法性</li>
-<li>大量微服务治理和并发工具包</li>
-</ul>
-<h2 id="计划">计划</h2>
-<p>go-zero 是一个集大成者，但又不失优雅的微服务框架，我计划在业余时间研究它的源码。我把感兴趣的模块都写在了下面的 TODO列表：</p>
-<ul>
-<li>disResolver&ndash;基于 etcd 实现的服务发现</li>
-<li>Balancer&ndash;基于 p2c 负载均衡</li>
-<li>Bloom 布隆过滤器的实现</li>
-<li>zero 的熔断器</li>
-<li>&hellip;&hellip;</li>
-</ul>
-]]></content>
-		</item>
-		
-		<item>
-			<title>go-zero Resolver--基于 etcd 实现的服务发现</title>
-			<link>https://wangzeping722.github.io/posts/go-zero-resolver/</link>
-			<pubDate>Fri, 06 Nov 2020 12:56:11 +0800</pubDate>
-			
-			<guid>https://wangzeping722.github.io/posts/go-zero-resolver/</guid>
-			<description></description>
-			<content type="html"><![CDATA[]]></content>
-		</item>
-		
-		<item>
-			<title>gRPC Resolver 原理</title>
-			<link>https://wangzeping722.github.io/posts/grpc-resolver/</link>
-			<pubDate>Thu, 29 Oct 2020 09:56:05 +0800</pubDate>
-			
-			<guid>https://wangzeping722.github.io/posts/grpc-resolver/</guid>
-			<description>1. 前言 gRPC Resolver 是 gRPC 的核心功能之一，与 gRPC Balancer 一起负责 gRPC 调用其它服务时的负载均衡。gRPC 负载均衡是针对每次请求，而不是连接，这样可以保证服务端负载的</description>
-			<content type="html"><![CDATA[<h2 id="1-前言">1. 前言</h2>
-<p>gRPC Resolver 是 gRPC 的核心功能之一，与 gRPC Balancer 一起负责 gRPC 调用其它服务时的负载均衡。gRPC 负载均衡是针对每次请求，而不是连接，这样可以保证服务端负载的均衡性，所有 gRPC 负载均衡算法实现都在客户端。</p>
-<h2 id="2-resolver">2. Resolver</h2>
-<p>下图是 gRPC 客户端负载均衡的架构图：</p>
-<p><!-- raw HTML omitted --></p>
-<p>从图中可以看出，Resolver 位于图片的左方，gRPC 负载与 Resolver 交互：</p>
-<ol>
-<li>首先会 Build 一个 Resolver 实例，并且 watch 后端服务列表的变化</li>
-<li>当服务列表发生变化后，Resolver 通过 gRPC 通知 Balancer</li>
-</ol>
-<h2 id="3-基本概念">3. 基本概念</h2>
-<p><code>ClientConn</code> 对象是连接管理的入口，表示到服务端的一个逻辑的连接，会做名字解析、负载均衡、KeepAlive 等连接管理方面的操作，是个线程安全的对象。</p>
-<p>每个 <code>ClientConn</code> 对应有多个 <code>SubConn</code>，<code>ClientConn</code> 会基于服务发现（resolver）得到多个 SubConn，并在多个 <code>SubConn</code> 之间实现负载均衡（balancer）。</p>
-<h2 id="4-源码分析">4. 源码分析</h2>
-<p>Resolver 的代码主要集中在 resolver 包中，里面主要包含了服务解析的接口定义，我们既可以自己通过实现 resolver 中的接口来自定义自己的 Resolver，也可以使用 gRPC 实现的 <a href="https://github.com/grpc/grpc-go/blob/master/internal/resolver/dns/dns_resolver.go">DNSResolver</a>。</p>
-<h3 id="address">Address</h3>
-<p>Address 用来代表一个当前客户端即将连接到的服务端的地址，一个服务一般会有多个地址，所有我们在监听的时候一般会获取到 Address 的切片。其中的 <code>Addr</code> 字段是服务器的地址, <code>Attributes</code>  和 <code>Metadata</code> 用来存储服务端的额外的信息，一般被负载均衡器用来决定 pick 哪一条连接：</p>
-<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Address represents a server the client connects to.
-</span><span class="c1"></span><span class="c1">//
-</span><span class="c1"></span><span class="c1">// Experimental
-</span><span class="c1"></span><span class="c1">//
-</span><span class="c1"></span><span class="c1">// Notice: This type is EXPERIMENTAL and may be changed or removed in a
-</span><span class="c1"></span><span class="c1">// later release.
-</span><span class="c1"></span><span class="kd">type</span> <span class="nx">Address</span> <span class="kd">struct</span> <span class="p">{</span>
-	<span class="c1">// Addr is the server address on which a connection will be established.
-</span><span class="c1"></span>	<span class="nx">Addr</span> <span class="kt">string</span>
 
-	<span class="c1">// ServerName is the name of this address.
-</span><span class="c1"></span>	<span class="c1">// If non-empty, the ServerName is used as the transport certification authority for
-</span><span class="c1"></span>	<span class="c1">// the address, instead of the hostname from the Dial target string. In most cases,
-</span><span class="c1"></span>	<span class="c1">// this should not be set.
-</span><span class="c1"></span>	<span class="c1">//
-</span><span class="c1"></span>	<span class="c1">// If Type is GRPCLB, ServerName should be the name of the remote load
-</span><span class="c1"></span>	<span class="c1">// balancer, not the name of the backend.
-</span><span class="c1"></span>	<span class="c1">//
-</span><span class="c1"></span>	<span class="c1">// WARNING: ServerName must only be populated with trusted values. It
-</span><span class="c1"></span>	<span class="c1">// is insecure to populate it with data from untrusted inputs since untrusted
-</span><span class="c1"></span>	<span class="c1">// values could be used to bypass the authority checks performed by TLS.
-</span><span class="c1"></span>	<span class="nx">ServerName</span> <span class="kt">string</span>
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2020-11-06 18:07 &#43;0800</p>
+			</footer>
+		</article>
+		<div class="post-nav thin">
+			<a class="prev-post" href="https://wangzeping722.github.io/posts/go-zero/">
+				<span class="post-nav-label">&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>go-zero 源码分析计划</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+</div>
+	</main>
 
-	<span class="c1">// Attributes contains arbitrary data about this address intended for
-</span><span class="c1"></span>	<span class="c1">// consumption by the load balancing policy.
-</span><span class="c1"></span>	<span class="nx">Attributes</span> <span class="o">*</span><span class="nx">attributes</span><span class="p">.</span><span class="nx">Attributes</span>
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2020 <a href="https://wangzeping722.github.io/">🐟</a> &#183; <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://wangzeping722.github.io/posts/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
 
-	<span class="c1">// Type is the type of this address.
-</span><span class="c1"></span>	<span class="c1">//
-</span><span class="c1"></span>	<span class="c1">// Deprecated: use Attributes instead.
-</span><span class="c1"></span>	<span class="nx">Type</span> <span class="nx">AddressType</span>
 
-	<span class="c1">// Metadata is the information associated with Addr, which may be used
-</span><span class="c1"></span>	<span class="c1">// to make load balancing decision.
-</span><span class="c1"></span>	<span class="c1">//
-</span><span class="c1"></span>	<span class="c1">// Deprecated: use Attributes instead.
-</span><span class="c1"></span>	<span class="nx">Metadata</span> <span class="kd">interface</span><span class="p">{</span><span class="p">}</span>
-<span class="p">}</span>
-</code></pre></div><h3 id="clientconn">ClientConn</h3>
-<p>ClientConn 为 resolver 提供了通知 ClientConn 更新服务端列表的回调方法。这个接口不推荐用户自己实现：</p>
-<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// ClientConn contains the callbacks for resolver to notify any updates
-</span><span class="c1"></span><span class="c1">// to the gRPC ClientConn.
-</span><span class="c1"></span><span class="c1">//
-</span><span class="c1"></span><span class="c1">// This interface is to be implemented by gRPC. Users should not need a
-</span><span class="c1"></span><span class="c1">// brand new implementation of this interface. For the situations like
-</span><span class="c1"></span><span class="c1">// testing, the new implementation should embed this interface. This allows
-</span><span class="c1"></span><span class="c1">// gRPC to add new methods to this interface.
-</span><span class="c1"></span><span class="kd">type</span> <span class="nx">ClientConn</span> <span class="kd">interface</span> <span class="p">{</span>
-	<span class="c1">// UpdateState updates the state of the ClientConn appropriately.
-</span><span class="c1"></span>	<span class="nf">UpdateState</span><span class="p">(</span><span class="nx">State</span><span class="p">)</span>
-	<span class="c1">// ReportError notifies the ClientConn that the Resolver encountered an
-</span><span class="c1"></span>	<span class="c1">// error.  The ClientConn will notify the load balancer and begin calling
-</span><span class="c1"></span>	<span class="c1">// ResolveNow on the Resolver with exponential backoff.
-</span><span class="c1"></span>	<span class="nf">ReportError</span><span class="p">(</span><span class="kt">error</span><span class="p">)</span>
-	<span class="c1">// NewAddress is called by resolver to notify ClientConn a new list
-</span><span class="c1"></span>	<span class="c1">// of resolved addresses.
-</span><span class="c1"></span>	<span class="c1">// The address list should be the complete list of resolved addresses.
-</span><span class="c1"></span>	<span class="c1">//
-</span><span class="c1"></span>	<span class="c1">// Deprecated: Use UpdateState instead.
-</span><span class="c1"></span>	<span class="nf">NewAddress</span><span class="p">(</span><span class="nx">addresses</span> <span class="p">[</span><span class="p">]</span><span class="nx">Address</span><span class="p">)</span>
-	<span class="c1">// NewServiceConfig is called by resolver to notify ClientConn a new
-</span><span class="c1"></span>	<span class="c1">// service config. The service config should be provided as a json string.
-</span><span class="c1"></span>	<span class="c1">//
-</span><span class="c1"></span>	<span class="c1">// Deprecated: Use UpdateState instead.
-</span><span class="c1"></span>	<span class="nf">NewServiceConfig</span><span class="p">(</span><span class="nx">serviceConfig</span> <span class="kt">string</span><span class="p">)</span>
-	<span class="c1">// ParseServiceConfig parses the provided service config and returns an
-</span><span class="c1"></span>	<span class="c1">// object that provides the parsed config.
-</span><span class="c1"></span>	<span class="nf">ParseServiceConfig</span><span class="p">(</span><span class="nx">serviceConfigJSON</span> <span class="kt">string</span><span class="p">)</span> <span class="o">*</span><span class="nx">serviceconfig</span><span class="p">.</span><span class="nx">ParseResult</span>
-<span class="p">}</span>
-</code></pre></div><p>一般我们的 Resolver 中都会用一个成员变量来存储 ClientConn，然后再需要更新服务端地址的时候调用 <code>UpdateState</code>。例如 dnsResolver 中存储了 <code>cc</code>：</p>
-<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">type</span> <span class="nx">dnsResolver</span> <span class="kd">struct</span> <span class="p">{</span>
-	<span class="o">...</span>
-	<span class="nx">cc</span>       <span class="nx">resolver</span><span class="p">.</span><span class="nx">ClientConn</span>
-	<span class="o">...</span>
-<span class="p">}</span>
-</code></pre></div><h3 id="target">Target</h3>
-<p>Target 是一个存储注册中心信息和后端服务信息的结构体, 并且通过 Scheme 指定了 gRPC 使用的解析器的名称：</p>
-<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Target represents a target for gRPC, as specified in:
-</span><span class="c1"></span><span class="c1">// https://github.com/grpc/grpc/blob/master/doc/naming.md.
-</span><span class="c1"></span><span class="c1">// It is parsed from the target string that gets passed into Dial or DialContext by the user. And
-</span><span class="c1"></span><span class="c1">// grpc passes it to the resolver and the balancer.
-</span><span class="c1"></span><span class="kd">type</span> <span class="nx">Target</span> <span class="kd">struct</span> <span class="p">{</span>
-	<span class="nx">Scheme</span>    <span class="kt">string</span>	<span class="c1">// 注册在 gRPC 中的名称
-</span><span class="c1"></span>	<span class="nx">Authority</span> <span class="kt">string</span>	<span class="c1">// 服务发现的权威服务器
-</span><span class="c1"></span>	<span class="nx">Endpoint</span>  <span class="kt">string</span>	<span class="c1">// 一般是服务名或者HOST
-</span><span class="c1"></span><span class="p">}</span>
-</code></pre></div><p>例如我们有一个 Target 是 <code>dns://some_authority/foo.bar</code>， 那么对应的被解析出来就应该是</p>
-<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="nx">Scheme</span> <span class="p">=</span> <span class="nx">dns</span>
-<span class="nx">Authority</span> <span class="p">=</span> <span class="nx">some_authority</span>
-<span class="nx">Endpoint</span> <span class="p">=</span> <span class="nx">foo</span><span class="p">.</span><span class="nx">bar</span>
-</code></pre></div><h3 id="builder">Builder</h3>
-<p>Builder 接口为我们提供了创建 Resolver 的 Build 方法，并且持续监听服务端地址的变化：</p>
-<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Builder creates a resolver that will be used to watch name resolution updates.
-</span><span class="c1"></span><span class="kd">type</span> <span class="nx">Builder</span> <span class="kd">interface</span> <span class="p">{</span>
-	<span class="c1">// Build creates a new resolver for the given target.
-</span><span class="c1"></span>	<span class="c1">//
-</span><span class="c1"></span>	<span class="c1">// gRPC dial calls Build synchronously, and fails if the returned error is
-</span><span class="c1"></span>	<span class="c1">// not nil.
-</span><span class="c1"></span>	<span class="nf">Build</span><span class="p">(</span><span class="nx">target</span> <span class="nx">Target</span><span class="p">,</span> <span class="nx">cc</span> <span class="nx">ClientConn</span><span class="p">,</span> <span class="nx">opts</span> <span class="nx">BuildOptions</span><span class="p">)</span> <span class="p">(</span><span class="nx">Resolver</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
-	<span class="c1">// Scheme returns the scheme supported by this resolver.
-</span><span class="c1"></span>	<span class="c1">// Scheme is defined at https://github.com/grpc/grpc/blob/master/doc/naming.md.
-</span><span class="c1"></span>	<span class="nf">Scheme</span><span class="p">(</span><span class="p">)</span> <span class="kt">string</span>
-<span class="p">}</span>
-</code></pre></div><p>从注释中，我们可以理解到：当向 gRPC 注册解析器的时候，实际上注册的是 Builder，通过 Build 方法来创建 Resolver，并且一般会在 Build 方法中开启 goroutine 来 watch 服务端的变化。</p>
-<p>Build 方法的参数就包含了上节提到的 <code>cc ClientConn</code>，然后如上文说的，把 cc 存储到 Resolver 中，在观察到服务地址发生变化的时候</p>
-<p>通过 <code>cc.UpdateState(resolver.State{Addresses: addr})</code> 来通知 ClientConn 服务器列表发生变化。</p>
-<h3 id="resolver">Resolver</h3>
-<p>Resolver 被 Builder 创建出来，实现了监听服务名映射到的地址变化的逻辑：</p>
-<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Resolver watches for the updates on the specified target.
-</span><span class="c1"></span><span class="c1">// Updates include address updates and service config updates.
-</span><span class="c1"></span><span class="kd">type</span> <span class="nx">Resolver</span> <span class="kd">interface</span> <span class="p">{</span>
-	<span class="c1">// ResolveNow will be called by gRPC to try to resolve the target name
-</span><span class="c1"></span>	<span class="c1">// again. It&#39;s just a hint, resolver can ignore this if it&#39;s not necessary.
-</span><span class="c1"></span>	<span class="c1">//
-</span><span class="c1"></span>	<span class="c1">// It could be called multiple times concurrently.
-</span><span class="c1"></span>	<span class="nf">ResolveNow</span><span class="p">(</span><span class="nx">ResolveNowOptions</span><span class="p">)</span>
-	<span class="c1">// Close closes the resolver.
-</span><span class="c1"></span>	<span class="nf">Close</span><span class="p">(</span><span class="p">)</span>
-<span class="p">}</span>
-</code></pre></div><h3 id="小结">小结</h3>
-<p>resolver 包的使用流程是，通过 Builder 接口来创建 Resolver，我们可以再 Resolver 中实现自己服务发现的逻辑，并且更新到 ClientConn 中。</p>
-<h2 id="5-resolver-应用">5. Resolver 应用</h2>
-<p>下面我们写一个完整的例子，用来分析 Resolver 的工作流程，我们程序的目的就是客户端通过 rpc 调用服务器的接口并打印出结果。为了减少篇幅，我就不贴出所有的代码，完整的代码可以在我的 <a href="https://github.com/wangzeping722/gRPC-resolver-demo">github</a> 获取。</p>
-<h3 id="servermaingo">server/main.go</h3>
-<p>通过 NewGreeterService 向 etcd 注册了服务的地址：</p>
-<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">g</span> <span class="o">*</span><span class="nx">greeterService</span><span class="p">)</span> <span class="nf">Register</span><span class="p">(</span><span class="p">)</span> <span class="p">{</span>
-	<span class="nx">target</span> <span class="o">:=</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;%s&#34;</span><span class="p">,</span> <span class="nx">serviceName</span><span class="p">)</span>
-	<span class="nx">ctx</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">WithTimeout</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">(</span><span class="p">)</span><span class="p">,</span> <span class="mi">5</span><span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
 
-	<span class="nx">_</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">g</span><span class="p">.</span><span class="nx">cli</span><span class="p">.</span><span class="nf">Put</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">target</span><span class="p">,</span> <span class="s">&#34;127.0.0.1:8000&#34;</span><span class="p">)</span>
-	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-		<span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
-	<span class="p">}</span>
-<span class="p">}</span>
-</code></pre></div><p>然后，监听在 8000 这个端口上，等待提供服务。</p>
-<h3 id="clientmaingo">client/main.go</h3>
-<p>由于本文的重心在于分析 Resolver，那么 client 的代码实现才是我们需要详细解析的。为了能够从 etcd 获取我们后端服务的地址，并且 gRPC 只提供了 dnsResolver，那么我们就要实现自己自定义的 Resolver，这里我们只实现了一个功能非常简单，并且没有 watch（即持续的服务发现）的 Resolver：</p>
-<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">type</span> <span class="nx">exampleResolver</span> <span class="kd">struct</span> <span class="p">{</span>
-	<span class="nx">target</span> <span class="nx">resolver</span><span class="p">.</span><span class="nx">Target</span>
-	<span class="nx">cc</span>     <span class="nx">resolver</span><span class="p">.</span><span class="nx">ClientConn</span>
-	<span class="nx">cli</span>    <span class="o">*</span><span class="nx">clientv3</span><span class="p">.</span><span class="nx">Client</span>
-<span class="p">}</span>
-
-<span class="kd">func</span> <span class="p">(</span><span class="nx">e</span> <span class="o">*</span><span class="nx">exampleResolver</span><span class="p">)</span> <span class="nf">ResolveNow</span><span class="p">(</span><span class="nx">_</span> <span class="nx">resolver</span><span class="p">.</span><span class="nx">ResolveNowOptions</span><span class="p">)</span> <span class="p">{</span>
-	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;ResolverNow&#34;</span><span class="p">)</span>
-<span class="p">}</span>
-
-<span class="kd">func</span> <span class="p">(</span><span class="nx">e</span> <span class="o">*</span><span class="nx">exampleResolver</span><span class="p">)</span> <span class="nf">Close</span><span class="p">(</span><span class="p">)</span> <span class="p">{</span>
-	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;Close&#34;</span><span class="p">)</span>
-<span class="p">}</span>
-
-<span class="kd">func</span> <span class="p">(</span><span class="nx">e</span> <span class="o">*</span><span class="nx">exampleResolver</span><span class="p">)</span> <span class="nf">resolve</span><span class="p">(</span><span class="p">)</span> <span class="p">{</span>
-	<span class="nx">once</span><span class="p">.</span><span class="nf">Do</span><span class="p">(</span><span class="kd">func</span><span class="p">(</span><span class="p">)</span> <span class="p">{</span>
-		<span class="nx">clientConfig</span> <span class="o">:=</span> <span class="nx">clientv3</span><span class="p">.</span><span class="nx">Config</span><span class="p">{</span>
-			<span class="nx">Endpoints</span><span class="p">:</span>   <span class="p">[</span><span class="p">]</span><span class="kt">string</span><span class="p">{</span><span class="nx">e</span><span class="p">.</span><span class="nx">target</span><span class="p">.</span><span class="nx">Authority</span><span class="p">}</span><span class="p">,</span>
-			<span class="nx">DialTimeout</span><span class="p">:</span> <span class="mi">120</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">,</span>
-		<span class="p">}</span>
-		<span class="nx">cli</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">clientv3</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="nx">clientConfig</span><span class="p">)</span>
-		<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-			<span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
-		<span class="p">}</span>
-		<span class="nx">e</span><span class="p">.</span><span class="nx">cli</span> <span class="p">=</span> <span class="nx">cli</span>
-	<span class="p">}</span><span class="p">)</span>
-	<span class="nx">addList</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="p">[</span><span class="p">]</span><span class="nx">resolver</span><span class="p">.</span><span class="nx">Address</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-  <span class="c1">// 获取服务对应的所有的后端地址，并且添加到 addList
-</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">result</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">e</span><span class="p">.</span><span class="nx">cli</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">(</span><span class="p">)</span><span class="p">,</span> <span class="nx">e</span><span class="p">.</span><span class="nx">target</span><span class="p">.</span><span class="nx">Endpoint</span><span class="p">,</span> <span class="nx">clientv3</span><span class="p">.</span><span class="nf">WithPrefix</span><span class="p">(</span><span class="p">)</span><span class="p">)</span><span class="p">;</span> <span class="nx">err</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
-		<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">kvs</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">result</span><span class="p">.</span><span class="nx">Kvs</span> <span class="p">{</span>
-			<span class="nx">addList</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">addList</span><span class="p">,</span> <span class="nx">resolver</span><span class="p">.</span><span class="nx">Address</span><span class="p">{</span>
-				<span class="nx">Addr</span><span class="p">:</span> <span class="nb">string</span><span class="p">(</span><span class="nx">kvs</span><span class="p">.</span><span class="nx">Value</span><span class="p">)</span><span class="p">,</span>
-			<span class="p">}</span><span class="p">)</span>
-			<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;resolved addr: %s\n&#34;</span><span class="p">,</span> <span class="nb">string</span><span class="p">(</span><span class="nx">kvs</span><span class="p">.</span><span class="nx">Value</span><span class="p">)</span><span class="p">)</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
-	<span class="nx">e</span><span class="p">.</span><span class="nx">cc</span><span class="p">.</span><span class="nf">UpdateState</span><span class="p">(</span><span class="nx">resolver</span><span class="p">.</span><span class="nx">State</span><span class="p">{</span><span class="nx">Addresses</span><span class="p">:</span> <span class="nx">addList</span><span class="p">}</span><span class="p">)</span>
-<span class="p">}</span>
-
-</code></pre></div><p>实现 exampleResolver， 可以看到，我们在 resolver 方法中实现了服务发现的代码，获得了服务对应的后端地址，然后通过 <code>cc.UpdateState(resolver.State{Addresses: addList})</code> 更新（添加、删除）本地的后端服务器列表。</p>
-<p>同时，我们还需要实现一个 Builder，用来创建 Resolver 实例，同时我们还需要把 Builder 注册到 gRPC 中，通过 <code>Scheme</code> 来标识我们自定义的 Resolver：</p>
-<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">init</span><span class="p">(</span><span class="p">)</span> <span class="p">{</span>
-	<span class="nx">resolver</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span><span class="nf">newBuilder</span><span class="p">(</span><span class="p">)</span><span class="p">)</span>
-<span class="p">}</span>
-
-<span class="kd">type</span> <span class="nx">exampleBuilder</span> <span class="kd">struct</span> <span class="p">{</span>
-<span class="p">}</span>
-
-<span class="kd">func</span> <span class="nf">newBuilder</span><span class="p">(</span><span class="p">)</span> <span class="o">*</span><span class="nx">exampleBuilder</span> <span class="p">{</span>
-	<span class="k">return</span> <span class="o">&amp;</span><span class="nx">exampleBuilder</span><span class="p">{</span><span class="p">}</span>
-<span class="p">}</span>
-
-<span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">exampleBuilder</span><span class="p">)</span> <span class="nf">Build</span><span class="p">(</span><span class="nx">target</span> <span class="nx">resolver</span><span class="p">.</span><span class="nx">Target</span><span class="p">,</span> <span class="nx">cc</span> <span class="nx">resolver</span><span class="p">.</span><span class="nx">ClientConn</span><span class="p">,</span> <span class="nx">opts</span> <span class="nx">resolver</span><span class="p">.</span><span class="nx">BuildOptions</span><span class="p">)</span> <span class="p">(</span><span class="nx">resolver</span><span class="p">.</span><span class="nx">Resolver</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
-	<span class="nx">r</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">exampleResolver</span><span class="p">{</span><span class="nx">cc</span><span class="p">:</span> <span class="nx">cc</span><span class="p">,</span> <span class="nx">target</span><span class="p">:</span> <span class="nx">target</span><span class="p">}</span>
-	<span class="nx">r</span><span class="p">.</span><span class="nf">resolve</span><span class="p">(</span><span class="p">)</span>
-	<span class="k">return</span> <span class="nx">r</span><span class="p">,</span> <span class="kc">nil</span>
-<span class="p">}</span>
-
-<span class="kd">func</span> <span class="p">(</span><span class="nx">b</span> <span class="o">*</span><span class="nx">exampleBuilder</span><span class="p">)</span> <span class="nf">Scheme</span><span class="p">(</span><span class="p">)</span> <span class="kt">string</span> <span class="p">{</span>
-	<span class="k">return</span> <span class="nx">scheme</span>
-<span class="p">}</span>
-</code></pre></div><p>再来看看 main 函数做了什么工作：</p>
-<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">main</span><span class="p">(</span><span class="p">)</span> <span class="p">{</span>
-	<span class="nx">target</span> <span class="o">:=</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;%s://%s/%s&#34;</span><span class="p">,</span> <span class="nx">scheme</span><span class="p">,</span> <span class="s">&#34;127.0.0.1:2379&#34;</span><span class="p">,</span> <span class="nx">serviceName</span><span class="p">)</span>
-	<span class="nx">ctx</span><span class="p">,</span> <span class="nx">cancel</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">WithTimeout</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">(</span><span class="p">)</span><span class="p">,</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="o">*</span><span class="mi">5</span><span class="p">)</span>
-	<span class="k">defer</span> <span class="nf">cancel</span><span class="p">(</span><span class="p">)</span>
-	<span class="nx">clientConn</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">grpc</span><span class="p">.</span><span class="nf">DialContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">target</span><span class="p">,</span> <span class="nx">grpc</span><span class="p">.</span><span class="nf">WithInsecure</span><span class="p">(</span><span class="p">)</span><span class="p">)</span>
-	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-		<span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
-	<span class="p">}</span>
-
-  <span class="c1">// 调用远程服务
-</span><span class="c1"></span>	<span class="nx">reply</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">hello</span><span class="p">.</span><span class="nf">NewGreeterClient</span><span class="p">(</span><span class="nx">clientConn</span><span class="p">)</span><span class="p">.</span><span class="nf">SayHello</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">(</span><span class="p">)</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">hello</span><span class="p">.</span><span class="nx">HelloRequest</span><span class="p">{</span>
-		<span class="nx">Name</span><span class="p">:</span> <span class="s">&#34;wero&#34;</span><span class="p">,</span>
-	<span class="p">}</span><span class="p">)</span>
-	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-		<span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
-	<span class="p">}</span>
-	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;get reply:&#34;</span><span class="p">,</span> <span class="nx">reply</span><span class="p">.</span><span class="nx">Message</span><span class="p">)</span>
-<span class="p">}</span>
-</code></pre></div><p>首先，我们通过 <code>target</code> 指出需要调用的远程服务，然后调用  <code>grpc.DialContext</code>，gRPC 便可以自动发现服务的地址了，并在我们调用远程服务的时候实现了负载均衡。不过我们不仅要知其然，更要知其所以然。</p>
-<h3 id="dialcontext-流程分析">DialContext 流程分析</h3>
-<p>最重要的便是 DialContext 这个函数了，那我们便从这个函数入手：</p>
-<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">DialContext</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">target</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">opts</span> <span class="o">...</span><span class="nx">DialOption</span><span class="p">)</span> <span class="p">(</span><span class="nx">conn</span> <span class="o">*</span><span class="nx">ClientConn</span><span class="p">,</span> <span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
-	<span class="nx">cc</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">ClientConn</span><span class="p">{</span>
-		<span class="nx">target</span><span class="p">:</span>            <span class="nx">target</span><span class="p">,</span>
-		<span class="nx">csMgr</span><span class="p">:</span>             <span class="o">&amp;</span><span class="nx">connectivityStateManager</span><span class="p">{</span><span class="p">}</span><span class="p">,</span>
-		<span class="nx">conns</span><span class="p">:</span>             <span class="nb">make</span><span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="o">*</span><span class="nx">addrConn</span><span class="p">]</span><span class="kd">struct</span><span class="p">{</span><span class="p">}</span><span class="p">)</span><span class="p">,</span>	<span class="c1">// 存储连接的 map
-</span><span class="c1"></span>		<span class="nx">dopts</span><span class="p">:</span>             <span class="nf">defaultDialOptions</span><span class="p">(</span><span class="p">)</span><span class="p">,</span>
-		<span class="nx">blockingpicker</span><span class="p">:</span>    <span class="nf">newPickerWrapper</span><span class="p">(</span><span class="p">)</span><span class="p">,</span>				<span class="c1">// 负载均衡的选择器
-</span><span class="c1"></span>		<span class="nx">czData</span><span class="p">:</span>            <span class="nb">new</span><span class="p">(</span><span class="nx">channelzData</span><span class="p">)</span><span class="p">,</span>
-		<span class="nx">firstResolveEvent</span><span class="p">:</span> <span class="nx">grpcsync</span><span class="p">.</span><span class="nf">NewEvent</span><span class="p">(</span><span class="p">)</span><span class="p">,</span>
-	<span class="p">}</span>
-  
-	<span class="o">...</span>
-	<span class="c1">// 初始化拦截器
-</span><span class="c1"></span>	<span class="nf">chainUnaryClientInterceptors</span><span class="p">(</span><span class="nx">cc</span><span class="p">)</span>
-	<span class="nf">chainStreamClientInterceptors</span><span class="p">(</span><span class="nx">cc</span><span class="p">)</span>
+	<script src="https://wangzeping722.github.io/js/bundle.min.4a9a0ac3d2217822c7865b4161e6c2a71de1d70492264337755427898dd718f6.js" integrity="sha256-SpoKw9IheCLHhltBYebCpx3h1wSSJkM3dVQniY3XGPY=" crossorigin="anonymous"></script>
 	
-  <span class="o">...</span>
-  
-	<span class="c1">// Determine the resolver to use.
-</span><span class="c1"></span>	<span class="c1">// 根据 target 上面置顶的 scheme 指定需要使用的 resolver
-</span><span class="c1"></span>	<span class="nx">cc</span><span class="p">.</span><span class="nx">parsedTarget</span> <span class="p">=</span> <span class="nx">grpcutil</span><span class="p">.</span><span class="nf">ParseTarget</span><span class="p">(</span><span class="nx">cc</span><span class="p">.</span><span class="nx">target</span><span class="p">)</span>
-	<span class="nx">unixScheme</span> <span class="o">:=</span> <span class="nx">strings</span><span class="p">.</span><span class="nf">HasPrefix</span><span class="p">(</span><span class="nx">cc</span><span class="p">.</span><span class="nx">target</span><span class="p">,</span> <span class="s">&#34;unix:&#34;</span><span class="p">)</span>
-	<span class="nx">channelz</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="nx">logger</span><span class="p">,</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">channelzID</span><span class="p">,</span> <span class="s">&#34;parsed scheme: %q&#34;</span><span class="p">,</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">parsedTarget</span><span class="p">.</span><span class="nx">Scheme</span><span class="p">)</span>
-	<span class="c1">// NameResolver 核心逻辑, 初始化 resolverBuilder, 如果传入的 scheme 找不到对应的 resolverBuilder, 就使用默认的
-</span><span class="c1"></span>	<span class="nx">resolverBuilder</span> <span class="o">:=</span> <span class="nx">cc</span><span class="p">.</span><span class="nf">getResolver</span><span class="p">(</span><span class="nx">cc</span><span class="p">.</span><span class="nx">parsedTarget</span><span class="p">.</span><span class="nx">Scheme</span><span class="p">)</span>
-	<span class="k">if</span> <span class="nx">resolverBuilder</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
-		<span class="c1">// If resolver builder is still nil, the parsed target&#39;s scheme is
-</span><span class="c1"></span>		<span class="c1">// not registered. Fallback to default resolver and set Endpoint to
-</span><span class="c1"></span>		<span class="c1">// the original target.
-</span><span class="c1"></span>		<span class="nx">channelz</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="nx">logger</span><span class="p">,</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">channelzID</span><span class="p">,</span> <span class="s">&#34;scheme %q not registered, fallback to default scheme&#34;</span><span class="p">,</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">parsedTarget</span><span class="p">.</span><span class="nx">Scheme</span><span class="p">)</span>
-		<span class="nx">cc</span><span class="p">.</span><span class="nx">parsedTarget</span> <span class="p">=</span> <span class="nx">resolver</span><span class="p">.</span><span class="nx">Target</span><span class="p">{</span>
-			<span class="nx">Scheme</span><span class="p">:</span>   <span class="nx">resolver</span><span class="p">.</span><span class="nf">GetDefaultScheme</span><span class="p">(</span><span class="p">)</span><span class="p">,</span>
-			<span class="nx">Endpoint</span><span class="p">:</span> <span class="nx">target</span><span class="p">,</span>
-		<span class="p">}</span>
-		<span class="nx">resolverBuilder</span> <span class="p">=</span> <span class="nx">cc</span><span class="p">.</span><span class="nf">getResolver</span><span class="p">(</span><span class="nx">cc</span><span class="p">.</span><span class="nx">parsedTarget</span><span class="p">.</span><span class="nx">Scheme</span><span class="p">)</span>
-		<span class="k">if</span> <span class="nx">resolverBuilder</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
-			<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;could not get resolver for default scheme: %q&#34;</span><span class="p">,</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">parsedTarget</span><span class="p">.</span><span class="nx">Scheme</span><span class="p">)</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
-  
-	<span class="o">...</span>
-  
-	<span class="nx">cc</span><span class="p">.</span><span class="nx">balancerBuildOpts</span> <span class="p">=</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">BuildOptions</span><span class="p">{</span>
-		<span class="nx">DialCreds</span><span class="p">:</span>        <span class="nx">credsClone</span><span class="p">,</span>
-		<span class="nx">CredsBundle</span><span class="p">:</span>      <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">copts</span><span class="p">.</span><span class="nx">CredsBundle</span><span class="p">,</span>
-		<span class="nx">Dialer</span><span class="p">:</span>           <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">copts</span><span class="p">.</span><span class="nx">Dialer</span><span class="p">,</span>
-		<span class="nx">ChannelzParentID</span><span class="p">:</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">channelzID</span><span class="p">,</span>
-		<span class="nx">Target</span><span class="p">:</span>           <span class="nx">cc</span><span class="p">.</span><span class="nx">parsedTarget</span><span class="p">,</span>
-	<span class="p">}</span>
 
-	<span class="c1">// Build the resolver.
-</span><span class="c1"></span>	<span class="c1">// 使用上面初始化的 resolverBuilder 构建 resolver
-</span><span class="c1"></span>	<span class="nx">rWrapper</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">newCCResolverWrapper</span><span class="p">(</span><span class="nx">cc</span><span class="p">,</span> <span class="nx">resolverBuilder</span><span class="p">)</span>
-	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;failed to build resolver: %v&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
-	<span class="p">}</span>
-	<span class="nx">cc</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">(</span><span class="p">)</span>
-	<span class="nx">cc</span><span class="p">.</span><span class="nx">resolverWrapper</span> <span class="p">=</span> <span class="nx">rWrapper</span>
-	<span class="nx">cc</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">(</span><span class="p">)</span>
-  
-	<span class="o">...</span>
-  
-	<span class="k">return</span> <span class="nx">cc</span><span class="p">,</span> <span class="kc">nil</span>
-<span class="p">}</span>
-</code></pre></div><p>代码中省略了一部分目前不关注的内容，可以看见的是，我们需要先通过 <code>target</code> 指定的 <code>scheme</code> 来获取 resolverBuilder， 然后再通过 builder 来构建出 resolver 实例。在我们的例子中 <code>scheme = test</code> ，其对应的 builder 就是上面的 <code>exampleBuilder</code>，代码如下：</p>
-<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">cc</span> <span class="o">*</span><span class="nx">ClientConn</span><span class="p">)</span> <span class="nf">getResolver</span><span class="p">(</span><span class="nx">scheme</span> <span class="kt">string</span><span class="p">)</span> <span class="nx">resolver</span><span class="p">.</span><span class="nx">Builder</span> <span class="p">{</span>
-	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">rb</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">resolvers</span> <span class="p">{</span>
-		<span class="k">if</span> <span class="nx">scheme</span> <span class="o">==</span> <span class="nx">rb</span><span class="p">.</span><span class="nf">Scheme</span><span class="p">(</span><span class="p">)</span> <span class="p">{</span>
-			<span class="k">return</span> <span class="nx">rb</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
-	<span class="k">return</span> <span class="nx">resolver</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="nx">scheme</span><span class="p">)</span>
-<span class="p">}</span>
-</code></pre></div><p>在获取到 builder 之后，紧接着就需要构建出用于服务发现的 <code>Resolver</code>，我们接往下看，发现 <code>newCCResolverWrapper(cc, resolverBuilder)</code> 会把获取到的 builder 传入函数中：</p>
-<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">newCCResolverWrapper</span><span class="p">(</span><span class="nx">cc</span> <span class="o">*</span><span class="nx">ClientConn</span><span class="p">,</span> <span class="nx">rb</span> <span class="nx">resolver</span><span class="p">.</span><span class="nx">Builder</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">ccResolverWrapper</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
-	<span class="nx">ccr</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">ccResolverWrapper</span><span class="p">{</span>
-		<span class="nx">cc</span><span class="p">:</span>   <span class="nx">cc</span><span class="p">,</span>
-		<span class="nx">done</span><span class="p">:</span> <span class="nx">grpcsync</span><span class="p">.</span><span class="nf">NewEvent</span><span class="p">(</span><span class="p">)</span><span class="p">,</span>
-	<span class="p">}</span>
-	<span class="o">...</span>
-	<span class="nx">rbo</span> <span class="o">:=</span> <span class="nx">resolve</span> <span class="nx">r</span><span class="p">.</span><span class="nx">BuildOptions</span><span class="p">{</span>
-		<span class="nx">DisableServiceConfig</span><span class="p">:</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">disableServiceConfig</span><span class="p">,</span>
-		<span class="nx">DialCreds</span><span class="p">:</span>            <span class="nx">credsClone</span><span class="p">,</span>
-		<span class="nx">CredsBundle</span><span class="p">:</span>          <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">copts</span><span class="p">.</span><span class="nx">CredsBundle</span><span class="p">,</span>
-		<span class="nx">Dialer</span><span class="p">:</span>               <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">copts</span><span class="p">.</span><span class="nx">Dialer</span><span class="p">,</span>
-	<span class="p">}</span>
+</body>
 
-	<span class="kd">var</span> <span class="nx">err</span> <span class="kt">error</span>
-	<span class="c1">// We need to hold the lock here while we assign to the ccr.resolver field
-</span><span class="c1"></span>	<span class="c1">// to guard against a data race caused by the following code path,
-</span><span class="c1"></span>	<span class="c1">// rb.Build--&gt;ccr.ReportError--&gt;ccr.poll--&gt;ccr.resolveNow, would end up
-</span><span class="c1"></span>	<span class="c1">// accessing ccr.resolver which is being assigned here.
-</span><span class="c1"></span>	<span class="nx">ccr</span><span class="p">.</span><span class="nx">resolverMu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">(</span><span class="p">)</span>
-	<span class="k">defer</span> <span class="nx">ccr</span><span class="p">.</span><span class="nx">resolverMu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">(</span><span class="p">)</span>
-	<span class="nx">ccr</span><span class="p">.</span><span class="nx">resolver</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">rb</span><span class="p">.</span><span class="nf">Build</span><span class="p">(</span><span class="nx">cc</span><span class="p">.</span><span class="nx">parsedTarget</span><span class="p">,</span> <span class="nx">ccr</span><span class="p">,</span> <span class="nx">rbo</span><span class="p">)</span>
-	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
-	<span class="p">}</span>
-	<span class="k">return</span> <span class="nx">ccr</span><span class="p">,</span> <span class="kc">nil</span>
-<span class="p">}</span>
-</code></pre></div><p>果然，这个函数会调用传入的 Builder，而这个 Builder 是一个接口，具体的实现是我们自定义的 <code>exampleBuilder</code>，在 Build 方法里面，我们一般会开启一个协程持续的获取后端服务器列表的状态，并通过 <code>	UpdateState(State)</code> ，来更新到 ClientConn 中（不过，在我这个建议的实现中，并没有开启协程来处理服务发现，而是一次性的获取，假设后端服务永远不出故障）。</p>
-<h3 id="总结">总结</h3>
-<p>到这里，对 Resolver 的分析基本完成，下一篇文章会分析 gRPC Balancer。</p>
-]]></content>
-		</item>
-		
-		<item>
-			<title>DNS学习总结</title>
-			<link>https://wangzeping722.github.io/posts/dns-recording/</link>
-			<pubDate>Mon, 23 Dec 2019 10:36:05 +0800</pubDate>
-			
-			<guid>https://wangzeping722.github.io/posts/dns-recording/</guid>
-			<description>DNS 有多种记录类型，每种记录都有不同的作用，这篇文章主要总结了常用的记录。 A A（Address）记录用来指定主机名（域名）对应的 IPv4 地址记录。比</description>
-			<content type="html"><![CDATA[<p>DNS 有多种记录类型，每种记录都有不同的作用，这篇文章主要总结了常用的记录。</p>
-<h4 id="a">A</h4>
-<p>A（Address）记录用来指定主机名（域名）对应的 IPv4 地址记录。比如，当你浏览一个网页时候会，浏览器就会先去查找对应域名的 A 记录，来获取 IP 地址，获得了 IP 地址，才能与服务器建立连接。</p>
-<blockquote>
-<p>我们可以为同一个域名添加多个 A 记录，解析的时候，会得到多个 IP，会随机选择一个使用。</p>
-</blockquote>
-<p><em>域名不区分大小写。记录的名称应该是由 ASCII 码字母、数字和 - 组成。</em></p>
-<h4 id="aaaa">AAAA</h4>
-<p>AAAA 记录用来指定主机名（域名）对应的 IPv6 地址记录，其他与 A 相同。</p>
-<h4 id="cname-canonical-names">CNAME （canonical names）</h4>
-<p>CNAME（规范名称），也就是别名记录，它能够让我们把多个名字映射到同一个主机。</p>
-<p>应用场景：</p>
-<ul>
-<li>使用 CDN 服务时。</li>
-<li>假如一个服务器运行着 100 个网站，这 100 个网站 CNAME 到 <code>a.example.com</code>。当该服务器 IP 改变时，你只需改变 <code>a.example.com</code>的 IP 就可以了。</li>
-</ul>
-<p>注意：由于<code>CNAME</code>记录就是一个替换，所以域名一旦设置<code>CNAME</code>记录以后，就不能再设置其他记录了（比如<code>A</code>记录和<code>MX</code>记录），这是为了防止产生冲突。举例来说，<code>foo.com</code>指向<code>bar.com</code>，而两个域名各有自己的<code>MX</code>记录，如果两者不一致，就会产生问题。由于顶级域名通常要设置<code>MX</code>记录，所以一般不允许用户对顶级域名设置<code>CNAME</code>记录。</p>
-<p>A记录是把域名解析到IP地址，而CNAME记录是把域名解析到另外一个域名，而这个域名最终会指向A记录，在功能实现在上A记录与CNAME记录没有区别。</p>
-<p>例如：</p>
-<pre><code class="language-dns" data-lang="dns">a.example.com       IN      A       192.168.1.101
-b.example.com       IN      CNAME   a.example.com（规范名称）
-</code></pre><p>你在请求 b.example.com 的时候，他会先返回给你一个 CNAME ，然后你在用 CNAME 去查询。</p>
-<h4 id="ns">NS</h4>
-<p>NS（Name Server），域名服务器记录，返回保存下一级域名信息的服务器地址。该记录只能设置为域名，不能设置为IP地址。</p>
-<p>一般来说，为了服务的安全可靠，至少应该有两条<code>NS</code>记录，而<code>A</code>记录和<code>MX</code>记录也可以有多条，这样就提供了服务的冗余性，防止出现单点失败。</p>
-<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell">$ dig NS google.com
-google.com.		777	IN	NS	ns4.google.com.
-google.com.		777	IN	NS	ns3.google.com.
-google.com.		777	IN	NS	ns2.google.com.
-google.com.		777	IN	NS	ns1.google.com.
-</code></pre></div><p>我们可以看见，google 的权威 NS 服务器有四个。</p>
-<h4 id="mx">MX</h4>
-<p>MX（MX record），邮件交换记录，用于邮件服务器的地址。MX 记录允许设置优先级，当多个邮件服务器可用时，会根据该值决定投递邮件的服务器（值小的优先），下面的<code>20, 10, 40 ...</code>就表示优先级。</p>
-<div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell">$ dig MX google.com
-google.com.		306	IN	MX	<span class="m">20</span> alt1.aspmx.l.google.com.
-google.com.		306	IN	MX	<span class="m">10</span> aspmx.l.google.com.
-google.com.		306	IN	MX	<span class="m">40</span> alt3.aspmx.l.google.com.
-google.com.		306	IN	MX	<span class="m">30</span> alt2.aspmx.l.google.com.
-google.com.		306	IN	MX	<span class="m">50</span> alt4.aspmx.l.google.com.
-</code></pre></div><h4 id="soa">SOA</h4>
-<p>SOA 叫做起始授权机构记录，NS用于标识多台域名解析服务器，SOA记录用于在众多NS记录中的<strong>主服务器</strong>。SOA 记录表示此域名的权威解析服务器地址。 当要查询的域名在所有递归解析服务器中没有域名解析的缓存时，就会回源来请求此域名的SOA记录，也叫权威解析记录。</p>
-<p>没有SOA记录的 zone 不符合 RFC 1035 要求的标准。</p>
-<pre><code>$TTL 86400
-@   IN  SOA     startech60serve root.startech60serve.com. (
-        2018110201  ;Serial
-        3600        ;Refresh
-        1800        ;Retry
-        604800      ;Expire
-        86400       ;Minimum TTL
-)
-        IN  NS      startech60serve
-        IN  A       192.168.1.3
-        IN  MX 10   startech60serve
-startech60serve     IN  A       192.168.1.3
-</code></pre><p><code>root.startech60serve.com. </code>其中第一个点表示是@</p>
-<h4 id="txt">TXT</h4>
-<p>TXT（TXT record），文本记录，一般用来描述一个域名，或者用来做某种验证功能，例如：</p>
-<div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh">$ dig TXT google.com
-google.com.		300	IN	TXT	<span class="s2">&#34;docusign=05958488-4752-4ef2-95eb-aa7ba8a3bd0e&#34;</span>
-google.com.		3600	IN	TXT	<span class="s2">&#34;facebook-domain-verification=22rm551cu4k0ab0bxsw536tlds4h95&#34;</span>
-google.com.		300	IN	TXT	<span class="s2">&#34;docusign=1b0a6754-49b1-4db5-8540-d2c12664b289&#34;</span>
-google.com.		3600	IN	TXT	<span class="s2">&#34;globalsign-smime-dv=CDYX+XFHUw2wml6/Gb8+59BsH31KzUr6c1l2BPvqKX8=&#34;</span>
-google.com.		3600	IN	TXT	<span class="s2">&#34;v=spf1 include:_spf.google.com ~all&#34;</span>
-</code></pre></div><h4 id="ptr">PTR</h4>
-<p>PTR 记录是 A 记录的逆向记录，又称做 IP 反查记录或指针记录，负责将 IP 反向解析为域名，即反向域名解析。</p>
-<p>参考：</p>
-<p><a href="https://skyao.io/learning-dns/dns/">https://skyao.io/learning-dns/dns/</a></p>
-<p><a href="https://deepzz.com/post/dns-recording-type.html">https://deepzz.com/post/dns-recording-type.html</a></p>
-]]></content>
-		</item>
-		
-		<item>
-			<title>如何设计与实现 WebConsole</title>
-			<link>https://wangzeping722.github.io/posts/how-to-write-webconsole/</link>
-			<pubDate>Wed, 04 Dec 2019 09:13:51 +0800</pubDate>
-			
-			<guid>https://wangzeping722.github.io/posts/how-to-write-webconsole/</guid>
-			<description>1. 调研 前端：了解到有一个非常优秀的开源web终端库： xterm.js , 使用起来也比较简单。 后端：使用 go 语言实现，因为 go 语言拥有许多优秀的开源ssh库，能够</description>
-			<content type="html"><![CDATA[<h3 id="1-调研">1. 调研</h3>
-<p>前端：了解到有一个非常优秀的开源web终端库： <strong>xterm.js</strong> , 使用起来也比较简单。</p>
-<p>后端：使用 go 语言实现，因为 go 语言拥有许多优秀的开源ssh库，能够满足我们的需求。</p>
-<p>难点：</p>
-<pre><code>1. 如何与 cf(cloud foundry) 进行交互得到 `ssh code` ？
-2. 如何把 ssh 命令行转换成 websocket 通讯, 并输出到 xterm.js 中？
-3. 如何控制访问权限？
-</code></pre>
-<h3 id="2-原理">2. 原理</h3>
-<p><img src="webconsole1.png" alt="webconsole原理图"></p>
-<p>​	1. 浏览器向服务器发起 websocket 请求</p>
-<p>​	2. 服务器通过 ssh 连接到 cf 容器</p>
-<p>​	3. 连接建立，服务器负责转发消息</p>
-<p>在后端和浏览器之间建立websocket连接后，将用户在浏览器中输入的命令通过 websocket 协议发送到后端，后端使用 ssh 协议将命令输入到容器ssh进程的 stdin，命令执行后，再从 stdout 中读取输出，通过websocket协议返回浏览器显示给用户，达到交互的目的。</p>
-<h3 id="3-问题解决以及服务端实现">3. 问题解决以及服务端实现</h3>
-<p>在前两个步骤中，我已经通过分析把原理和难点梳理清楚了，目前就需要着手解决这些问题。</p>
-<h4 id="31-如何获取-ssh-code">3.1 如何获取 ssh code</h4>
-<p>cf 有一个自带的命令 <code>cf ssh-code</code> 能够获取连接到容器用的 <code>ssh code</code>，但是我并没有在 cf 开源的 go 语言客户端 <code>cfclient</code> 中发现相关的 API，所以我去查看了 cf cli 的源码，并在里面发现了 <strong>cc</strong> 暴露出来的接口，有了这个接口之后，就能够通过 http 请求的方式获取 <code>ssh-code</code>。由于 <code>cfclient</code> 中并没有相关的代码，所以不得不自己实现一些方来获取 <code>ssh-code</code>, 于是这个问题解决了。</p>
-<h4 id="32-如何将-websocket-和-ssh-这两个协议的消息进行转换">3.2 如何将 websocket 和 ssh 这两个协议的消息进行转换</h4>
-<p><strong>连接建立</strong>：</p>
-<p><img src="webconsole2.png" alt=""></p>
-<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">WS</span><span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">gin</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
-	<span class="c1">// 初始化websocket连接
-</span><span class="c1"></span>	<span class="nx">upgrader</span> <span class="o">:=</span> <span class="nx">websocket</span><span class="p">.</span><span class="nx">Upgrader</span><span class="p">{</span>
-		<span class="nx">ReadBufferSize</span><span class="p">:</span>  <span class="mi">1024</span><span class="p">,</span>
-		<span class="nx">WriteBufferSize</span><span class="p">:</span> <span class="mi">1024</span><span class="p">,</span>
-	<span class="p">}</span>
-	<span class="nx">ws</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">upgrader</span><span class="p">.</span><span class="nf">Upgrade</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">Writer</span><span class="p">,</span> <span class="nx">c</span><span class="p">.</span><span class="nx">Request</span><span class="p">,</span> <span class="kc">nil</span><span class="p">)</span>
-	<span class="k">defer</span> <span class="nx">ws</span><span class="p">.</span><span class="nf">Close</span><span class="p">(</span><span class="p">)</span>
-  
-	<span class="c1">// 初始化ssh连接
-</span><span class="c1"></span>	<span class="nx">cl</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="s">&#34;claims&#34;</span><span class="p">)</span>
-	<span class="nx">s</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="s">&#34;session&#34;</span><span class="p">)</span>
-	<span class="nx">claims</span> <span class="o">:=</span> <span class="nx">cl</span><span class="p">.</span><span class="p">(</span><span class="o">*</span><span class="nx">utils</span><span class="p">.</span><span class="nx">Claims</span><span class="p">)</span>
-	<span class="nx">session</span> <span class="o">:=</span> <span class="nx">s</span><span class="p">.</span><span class="p">(</span><span class="o">*</span><span class="nx">utils</span><span class="p">.</span><span class="nx">Session</span><span class="p">)</span>
-
-	<span class="nx">sshShell</span> <span class="o">:=</span> <span class="nx">utils</span><span class="p">.</span><span class="nx">SSHShellSession</span><span class="p">{</span>
-		<span class="nx">Node</span><span class="p">:</span> <span class="nx">utils</span><span class="p">.</span><span class="nx">Node</span><span class="p">{</span>
-			<span class="nx">Host</span><span class="p">:</span> <span class="nx">claims</span><span class="p">.</span><span class="nx">Host</span><span class="p">,</span>
-			<span class="nx">Port</span><span class="p">:</span> <span class="nx">claims</span><span class="p">.</span><span class="nx">Port</span><span class="p">,</span>
-		<span class="p">}</span><span class="p">,</span>
-	<span class="p">}</span>
-
-	<span class="kd">var</span> <span class="nx">wsBuff</span> <span class="nx">WebSocketBufferWriter</span>
-	<span class="nx">sshShell</span><span class="p">.</span><span class="nx">StdoutPipe</span> <span class="p">=</span> <span class="o">&amp;</span><span class="nx">wsBuff</span>
-	<span class="nx">err</span> <span class="p">=</span> <span class="nx">sshConn</span><span class="p">.</span><span class="nf">Connect</span><span class="p">(</span><span class="nx">username</span><span class="p">,</span> <span class="nx">password</span><span class="p">)</span>
-	<span class="k">defer</span> <span class="nx">sshConn</span><span class="p">.</span><span class="nf">Close</span><span class="p">(</span><span class="p">)</span>
-	<span class="k">defer</span> <span class="nx">wsBuff</span><span class="p">.</span><span class="nf">Flush</span><span class="p">(</span><span class="nx">websocket</span><span class="p">.</span><span class="nx">TextMessage</span><span class="p">,</span> <span class="nx">ws</span><span class="p">)</span>
-	<span class="o">...</span><span class="o">...</span>
-  <span class="o">...</span><span class="o">...</span>
-<span class="p">}</span>
-</code></pre></div><p><strong>连接保持：</strong></p>
-<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">WS</span><span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">gin</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">{</span>
-  <span class="o">...</span><span class="o">...</span>
-  <span class="o">...</span><span class="o">...</span>
-	<span class="nx">done</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="kt">bool</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-	<span class="nx">setDone</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">(</span><span class="p">)</span> <span class="p">{</span> <span class="nx">done</span> <span class="o">&lt;-</span> <span class="kc">true</span> <span class="p">}</span>
-
-	<span class="c1">// 数据转换：websocket ----&gt; SSH
-</span><span class="c1"></span>	<span class="nx">writeMessageToSSHServer</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">(</span><span class="nx">wc</span> <span class="nx">io</span><span class="p">.</span><span class="nx">WriteCloser</span><span class="p">)</span> <span class="p">{</span>
-		<span class="k">defer</span> <span class="nf">setDone</span><span class="p">(</span><span class="p">)</span>
-		<span class="k">for</span> <span class="p">{</span>
-			<span class="c1">// 从websocket读取数据
-</span><span class="c1"></span>			<span class="nx">msgType</span><span class="p">,</span> <span class="nx">p</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">ws</span><span class="p">.</span><span class="nf">ReadMessage</span><span class="p">(</span><span class="p">)</span>
-
-			<span class="k">if</span> <span class="nx">err</span> <span class="p">=</span> <span class="nf">DispatchMessage</span><span class="p">(</span><span class="nx">sshShell</span><span class="p">.</span><span class="nx">Session</span><span class="p">,</span> <span class="nx">msgType</span><span class="p">,</span> <span class="nx">p</span><span class="p">,</span> <span class="nx">wc</span><span class="p">)</span><span class="p">;</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-				<span class="nx">log</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;Error: error write data to ssh server:&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
-				<span class="k">return</span>
-			<span class="p">}</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
-
-	<span class="nx">stopper</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="kt">bool</span><span class="p">)</span>
-	<span class="c1">// 数据转换：SSH ----&gt; websocket
-</span><span class="c1"></span>	<span class="nx">writeBufferToWebSocket</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">(</span><span class="p">)</span> <span class="p">{</span>
-		<span class="k">defer</span> <span class="nf">setDone</span><span class="p">(</span><span class="p">)</span>
-		<span class="nx">tick</span> <span class="o">:=</span> <span class="nx">time</span><span class="p">.</span><span class="nf">NewTicker</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Millisecond</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Duration</span><span class="p">(</span><span class="nx">utils</span><span class="p">.</span><span class="nx">Config</span><span class="p">.</span><span class="nx">SSH</span><span class="p">.</span><span class="nx">BufferCheckerCycleTime</span><span class="p">)</span><span class="p">)</span>
-		<span class="k">defer</span> <span class="nx">tick</span><span class="p">.</span><span class="nf">Stop</span><span class="p">(</span><span class="p">)</span>
-		<span class="k">for</span> <span class="p">{</span>
-			<span class="k">select</span> <span class="p">{</span>
-			<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">tick</span><span class="p">.</span><span class="nx">C</span><span class="p">:</span>
-				<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">wsBuff</span><span class="p">.</span><span class="nf">Flush</span><span class="p">(</span><span class="nx">websocket</span><span class="p">.</span><span class="nx">TextMessage</span><span class="p">,</span> <span class="nx">ws</span><span class="p">)</span><span class="p">;</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-					<span class="nx">log</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;Error: error sending data via webSocket:&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
-					<span class="k">return</span>
-				<span class="p">}</span>
-			<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">stopper</span><span class="p">:</span>
-				<span class="k">return</span>
-			<span class="p">}</span>
-		<span class="p">}</span>
-	<span class="p">}</span>
-
-	<span class="k">go</span> <span class="nf">writeMessageToSSHServer</span><span class="p">(</span><span class="nx">sshShell</span><span class="p">.</span><span class="nx">StdinPipe</span><span class="p">)</span>
-	<span class="k">go</span> <span class="nf">writeBufferToWebSocket</span><span class="p">(</span><span class="p">)</span>
-	<span class="k">go</span> <span class="kd">func</span><span class="p">(</span><span class="p">)</span> <span class="p">{</span>
-		<span class="k">defer</span> <span class="nf">setDone</span><span class="p">(</span><span class="p">)</span>
-		<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">sshShell</span><span class="p">.</span><span class="nx">Session</span><span class="p">.</span><span class="nf">Wait</span><span class="p">(</span><span class="p">)</span><span class="p">;</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span><span class="p">{</span>
-			<span class="nx">log</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;ssh exist from server&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
-		<span class="p">}</span>
-	<span class="p">}</span><span class="p">(</span><span class="p">)</span>
-
-	<span class="o">&lt;-</span><span class="nx">done</span>
-	<span class="nx">stopper</span> <span class="o">&lt;-</span> <span class="kc">true</span> 
-	<span class="nx">log</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;Info: websocket finished!&#34;</span><span class="p">)</span>
-<span class="p">}</span>
-</code></pre></div><p><strong>控制访问权限</strong>：</p>
-<p>利用 cf 自带的权限认证机制实现。</p>
-]]></content>
-		</item>
-		
-	</channel>
-</rss>
+</html>

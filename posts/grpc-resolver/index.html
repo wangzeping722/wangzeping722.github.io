@@ -11,7 +11,7 @@
 <meta itemprop="description" content="1. 前言 gRPC Resolver 是 gRPC 的核心功能之一，与 gRPC Balancer 一起负责 gRPC 调用其它服务时的负载均衡。gRPC 负载均衡是针对每次请求，而不是连接，这样可以保证服务端负载的">
 <meta itemprop="datePublished" content="2020-10-29T09:56:05&#43;08:00" />
 <meta itemprop="dateModified" content="2020-10-29T09:56:05&#43;08:00" />
-<meta itemprop="wordCount" content="3064">
+<meta itemprop="wordCount" content="3219">
 
 
 
@@ -75,14 +75,17 @@
 				<h2 id="1-前言">1. 前言<a href="#1-前言" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 <p>gRPC Resolver 是 gRPC 的核心功能之一，与 gRPC Balancer 一起负责 gRPC 调用其它服务时的负载均衡。gRPC 负载均衡是针对每次请求，而不是连接，这样可以保证服务端负载的均衡性，所有 gRPC 负载均衡算法实现都在客户端。</p>
 <h2 id="2-resolver">2. Resolver<a href="#2-resolver" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
-<p>下图是 gRPC 的架构图，其工作流程就是图中的数字标注的那样，<a href="https://github.com/grpc/grpc/blob/master/doc/load-balancing.md">官方文档</a>中也给出了具体的说明：</p>
-<p><img src="https://blog-wero.oss-cn-shanghai.aliyuncs.com/img/load-balancing.png" alt=""></p>
-<p>可以看出，Resolver 位于图片的左上方，负责以下工作：</p>
-<ul>
-<li>通过服务名解析出服务提供方的 IP 地址</li>
-<li>把解析出来的服务信息同步给 Load Balancer</li>
-</ul>
-<h2 id="3-源码分析">3. 源码分析<a href="#3-源码分析" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<p>下图是 gRPC 客户端负载均衡的架构图：</p>
+<p><!-- raw HTML omitted --></p>
+<p>从图中可以看出，Resolver 位于图片的左方，gRPC 负载与 Resolver 交互：</p>
+<ol>
+<li>首先会 Build 一个 Resolver 实例，并且 watch 后端服务列表的变化</li>
+<li>当服务列表发生变化后，Resolver 通过 gRPC 通知 Balancer</li>
+</ol>
+<h2 id="3-基本概念">3. 基本概念<a href="#3-基本概念" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<p><code>ClientConn</code> 对象是连接管理的入口，表示到服务端的一个逻辑的连接，会做名字解析、负载均衡、KeepAlive 等连接管理方面的操作，是个线程安全的对象。</p>
+<p>每个 <code>ClientConn</code> 对应有多个 <code>SubConn</code>，<code>ClientConn</code> 会基于服务发现（resolver）得到多个 SubConn，并在多个 <code>SubConn</code> 之间实现负载均衡（balancer）。</p>
+<h2 id="4-源码分析">4. 源码分析<a href="#4-源码分析" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 <p>Resolver 的代码主要集中在 resolver 包中，里面主要包含了服务解析的接口定义，我们既可以自己通过实现 resolver 中的接口来自定义自己的 Resolver，也可以使用 gRPC 实现的 <a href="https://github.com/grpc/grpc-go/blob/master/internal/resolver/dns/dns_resolver.go">DNSResolver</a>。</p>
 <h3 id="address">Address<a href="#address" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
 <p>Address 用来代表一个当前客户端即将连接到的服务端的地址，一个服务一般会有多个地址，所有我们在监听的时候一般会获取到 Address 的切片。其中的 <code>Addr</code> 字段是服务器的地址, <code>Attributes</code>  和 <code>Metadata</code> 用来存储服务端的额外的信息，一般被负载均衡器用来决定 pick 哪一条连接：</p>
@@ -207,7 +210,7 @@
 <span class="p">}</span>
 </code></pre></div><h3 id="小结">小结<a href="#小结" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
 <p>resolver 包的使用流程是，通过 Builder 接口来创建 Resolver，我们可以再 Resolver 中实现自己服务发现的逻辑，并且更新到 ClientConn 中。</p>
-<h2 id="4-resolver-应用">4. Resolver 应用<a href="#4-resolver-应用" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<h2 id="5-resolver-应用">5. Resolver 应用<a href="#5-resolver-应用" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 <p>下面我们写一个完整的例子，用来分析 Resolver 的工作流程，我们程序的目的就是客户端通过 rpc 调用服务器的接口并打印出结果。为了减少篇幅，我就不贴出所有的代码，完整的代码可以在我的 <a href="https://github.com/wangzeping722/gRPC-resolver-demo">github</a> 获取。</p>
 <h3 id="servermaingo">server/main.go<a href="#servermaingo" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
 <p>通过 NewGreeterService 向 etcd 注册了服务的地址：</p>
@@ -386,7 +389,7 @@
 		<span class="nx">done</span><span class="p">:</span> <span class="nx">grpcsync</span><span class="p">.</span><span class="nf">NewEvent</span><span class="p">(</span><span class="p">)</span><span class="p">,</span>
 	<span class="p">}</span>
 	<span class="o">...</span>
-	<span class="nx">rbo</span> <span class="o">:=</span> <span class="nx">resolver</span><span class="p">.</span><span class="nx">BuildOptions</span><span class="p">{</span>
+	<span class="nx">rbo</span> <span class="o">:=</span> <span class="nx">resolve</span> <span class="nx">r</span><span class="p">.</span><span class="nx">BuildOptions</span><span class="p">{</span>
 		<span class="nx">DisableServiceConfig</span><span class="p">:</span> <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">disableServiceConfig</span><span class="p">,</span>
 		<span class="nx">DialCreds</span><span class="p">:</span>            <span class="nx">credsClone</span><span class="p">,</span>
 		<span class="nx">CredsBundle</span><span class="p">:</span>          <span class="nx">cc</span><span class="p">.</span><span class="nx">dopts</span><span class="p">.</span><span class="nx">copts</span><span class="p">.</span><span class="nx">CredsBundle</span><span class="p">,</span>
@@ -408,7 +411,7 @@
 <span class="p">}</span>
 </code></pre></div><p>果然，这个函数会调用传入的 Builder，而这个 Builder 是一个接口，具体的实现是我们自定义的 <code>exampleBuilder</code>，在 Build 方法里面，我们一般会开启一个协程持续的获取后端服务器列表的状态，并通过 <code>	UpdateState(State)</code> ，来更新到 ClientConn 中（不过，在我这个建议的实现中，并没有开启协程来处理服务发现，而是一次性的获取，假设后端服务永远不出故障）。</p>
 <h3 id="总结">总结<a href="#总结" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
-<p>到这里，对 Resolver 的分析基本完成，下一篇文章会分析 gRPC Balancer 哦。</p>
+<p>到这里，对 Resolver 的分析基本完成，下一篇文章会分析 gRPC Balancer。</p>
 
 			</div>
 			<hr class="post-end">
@@ -418,6 +421,9 @@
 			</footer>
 		</article>
 		<div class="post-nav thin">
+			<a class="next-post" href="https://wangzeping722.github.io/posts/go-zero-resolver/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;</span><br><span>go-zero Resolver--基于 etcd 实现的服务发现</span>
+			</a>
 			<a class="prev-post" href="https://wangzeping722.github.io/posts/dns-recording/">
 				<span class="post-nav-label">&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>DNS学习总结</span>
 			</a>

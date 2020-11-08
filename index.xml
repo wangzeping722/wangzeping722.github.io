@@ -7,10 +7,37 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>zh</language>
     <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-    <lastBuildDate>Thu, 29 Oct 2020 09:56:05 +0800</lastBuildDate>
+    <lastBuildDate>Fri, 06 Nov 2020 18:07:55 +0800</lastBuildDate>
     
 	<atom:link href="https://wangzeping722.github.io/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>gRPC Balancer 分析</title>
+      <link>https://wangzeping722.github.io/posts/grpc-balancer/</link>
+      <pubDate>Fri, 06 Nov 2020 18:07:55 +0800</pubDate>
+      
+      <guid>https://wangzeping722.github.io/posts/grpc-balancer/</guid>
+      <description>1. 负载均衡 gRPC 实现负载均衡的方法主要有三种，分别是 集中式 LB（Proxy Model） 进程内 LB（Balancing-aware Client） 独</description>
+    </item>
+    
+    <item>
+      <title>go-zero 源码分析计划</title>
+      <link>https://wangzeping722.github.io/posts/go-zero/</link>
+      <pubDate>Fri, 06 Nov 2020 13:03:49 +0800</pubDate>
+      
+      <guid>https://wangzeping722.github.io/posts/go-zero/</guid>
+      <description>go-zero 是一个集成了各种工程实践的 web 和 rpc 框架。通过弹性设计保障了大并发服务端的稳定性，经受了充分的实战检验。 go-zero 包含极简的 API 定义和生成工具 goctl</description>
+    </item>
+    
+    <item>
+      <title>go-zero Resolver--基于 etcd 实现的服务发现</title>
+      <link>https://wangzeping722.github.io/posts/go-zero-resolver/</link>
+      <pubDate>Fri, 06 Nov 2020 12:56:11 +0800</pubDate>
+      
+      <guid>https://wangzeping722.github.io/posts/go-zero-resolver/</guid>
+      <description></description>
+    </item>
     
     <item>
       <title>gRPC Resolver 原理</title>
