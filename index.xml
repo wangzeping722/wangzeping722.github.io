@@ -49,7 +49,7 @@
     </item>
     
     <item>
-      <title>gRPC Resolver 原理</title>
+      <title>gRPC Resolver 分析</title>
       <link>https://wangzeping722.github.io/posts/grpc-resolver/</link>
       <pubDate>Thu, 29 Oct 2020 09:56:05 +0800</pubDate>
       

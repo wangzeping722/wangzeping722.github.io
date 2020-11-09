@@ -11,7 +11,7 @@
 <meta itemprop="description" content="1. 负载均衡 gRPC 实现负载均衡的方法主要有三种，分别是 集中式 LB（Proxy Model） 进程内 LB（Balancing-aware Client） 独">
 <meta itemprop="datePublished" content="2020-11-06T18:07:55&#43;08:00" />
 <meta itemprop="dateModified" content="2020-11-06T18:07:55&#43;08:00" />
-<meta itemprop="wordCount" content="5476">
+<meta itemprop="wordCount" content="5458">
 
 
 
@@ -91,7 +91,7 @@
 <li>当要发起 RPC 请求的时候，负载均衡器就会选择当前最匹配的子连接来进行 RCP 调用</li>
 </ol>
 <h2 id="2-问题">2. 问题<a href="#2-问题" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
-<p>今后有关代码剖析的文章都会提出问题，带着问题来看源码，收获会更多：</p>
+<p>带着问题来看源码，收获会更多：</p>
 <ul>
 <li>Balancer 如何接收来自 Resolver 解析出来的地址？</li>
 <li>与这些地址的连接是在哪建立的？</li>
