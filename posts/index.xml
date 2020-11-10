@@ -6,8 +6,102 @@
 		<generator>Hugo -- gohugo.io</generator>
 		<language>zh</language>
 		<copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-		<lastBuildDate>Fri, 06 Nov 2020 18:07:55 +0800</lastBuildDate>
+		<lastBuildDate>Mon, 09 Nov 2020 17:59:31 +0800</lastBuildDate>
 		<atom:link href="https://wangzeping722.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+		
+		<item>
+			<title>gRPC RoundRobin Picker 分析</title>
+			<link>https://wangzeping722.github.io/posts/grpc-picker/</link>
+			<pubDate>Mon, 09 Nov 2020 17:59:31 +0800</pubDate>
+			
+			<guid>https://wangzeping722.github.io/posts/grpc-picker/</guid>
+			<description>前言 上一篇文章提到过：Picker 是负载均衡器里面的一个组件，主要作用就是客户端要进行 rpc 调用的时候，在可用的连接中根据负载均衡策略挑选出最时</description>
+			<content type="html"><![CDATA[<h2 id="前言">前言</h2>
+<p>上一篇文章提到过：Picker 是负载均衡器里面的一个组件，主要作用就是客户端要进行 rpc 调用的时候，在可用的连接中根据负载均衡策略挑选出最时候的连接交个 gRPC 进行调用。本文简单的分析一下 Picker 的原理，以及官方实现的 RoundRobin Picker。</p>
+<h2 id="1-picker">1. Picker</h2>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Picker is used by gRPC to pick a SubConn to send an RPC.
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">Picker</span> <span class="kd">interface</span> <span class="p">{</span>
+   <span class="nf">Pick</span><span class="p">(</span><span class="nx">info</span> <span class="nx">PickInfo</span><span class="p">)</span> <span class="p">(</span><span class="nx">PickResult</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// PickResult contains information related to a connection chosen for an RPC.
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">PickResult</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="c1">// SubConn is the connection to use for this pick, if its state is Ready.
+</span><span class="c1"></span>	<span class="c1">// If the state is not Ready, gRPC will block the RPC until a new Picker is
+</span><span class="c1"></span>	<span class="c1">// provided by the balancer (using ClientConn.UpdateState).  The SubConn
+</span><span class="c1"></span>	<span class="c1">// must be one returned by ClientConn.NewSubConn.
+</span><span class="c1"></span>	<span class="nx">SubConn</span> <span class="nx">SubConn</span>
+
+	<span class="c1">// Done is called when the RPC is completed.  If the SubConn is not ready,
+</span><span class="c1"></span>	<span class="c1">// this will be called with a nil parameter.  If the SubConn is not a valid
+</span><span class="c1"></span>	<span class="c1">// type, Done may not be called.  May be nil if the balancer does not wish
+</span><span class="c1"></span>	<span class="c1">// to be notified when the RPC completes.
+</span><span class="c1"></span>	<span class="nx">Done</span> <span class="kd">func</span><span class="p">(</span><span class="nx">DoneInfo</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// DoneInfo contains additional information for done.
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">DoneInfo</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="c1">// Err is the rpc error the RPC finished with. It could be nil.
+</span><span class="c1"></span>	<span class="nx">Err</span> <span class="kt">error</span>
+	<span class="c1">// Trailer contains the metadata from the RPC&#39;s trailer, if present.
+</span><span class="c1"></span>	<span class="nx">Trailer</span> <span class="nx">metadata</span><span class="p">.</span><span class="nx">MD</span>
+	<span class="c1">// BytesSent indicates if any bytes have been sent to the server.
+</span><span class="c1"></span>	<span class="nx">BytesSent</span> <span class="kt">bool</span>
+	<span class="c1">// BytesReceived indicates if any byte has been received from the server.
+</span><span class="c1"></span>	<span class="nx">BytesReceived</span> <span class="kt">bool</span>
+	<span class="c1">// ServerLoad is the load received from server. It&#39;s usually sent as part of
+</span><span class="c1"></span>	<span class="c1">// trailing metadata.
+</span><span class="c1"></span>	<span class="c1">//
+</span><span class="c1"></span>	<span class="c1">// The only supported type now is *orca_v1.LoadReport.
+</span><span class="c1"></span>	<span class="nx">ServerLoad</span> <span class="kd">interface</span><span class="p">{</span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div><p>Picker 接口只有一个 Pick 方法，用来返回一个可用的 <code>SubConn</code> 。需要注意的是，Pick 并不是直接返回一个 <code>SubConn</code>，而是返回了一个 <code>PickResult</code> ，里面包含了一个 <code>SubConn</code> ，以及一个 <code>Done func(DoneInfo)</code> 的闭包。从文档中可以看出，这个闭包是在 RPC 调用完成之后才被调用的。参数 <code>DoneInfo</code> 包含了调用以及服务器返回的信息。有经验的小伙伴肯定已经猜到了：<code>DoneInfo</code> 中的 Trailer 能够写到服务端信息（包括 CPU，内存，服务器状态等信息），这样就可以利用 DoneInfo 作为 Picker 以后 Pick 服务器的依据。</p>
+<h2 id="2-rrpicker-实现">2. rrPicker 实现</h2>
+<p>官方的实现很简单，这里就直接贴出代码：</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">type</span> <span class="nx">rrPickerBuilder</span> <span class="kd">struct</span><span class="p">{</span><span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="o">*</span><span class="nx">rrPickerBuilder</span><span class="p">)</span> <span class="nf">Build</span><span class="p">(</span><span class="nx">info</span> <span class="nx">base</span><span class="p">.</span><span class="nx">PickerBuildInfo</span><span class="p">)</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">Picker</span> <span class="p">{</span>
+	<span class="nx">logger</span><span class="p">.</span><span class="nf">Infof</span><span class="p">(</span><span class="s">&#34;roundrobinPicker: newPicker called with info: %v&#34;</span><span class="p">,</span> <span class="nx">info</span><span class="p">)</span>
+  <span class="c1">// 没有可用的连接，返回 errPicker
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">info</span><span class="p">.</span><span class="nx">ReadySCs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">base</span><span class="p">.</span><span class="nf">NewErrPicker</span><span class="p">(</span><span class="nx">balancer</span><span class="p">.</span><span class="nx">ErrNoSubConnAvailable</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="kd">var</span> <span class="nx">scs</span> <span class="p">[</span><span class="p">]</span><span class="nx">balancer</span><span class="p">.</span><span class="nx">SubConn</span>
+	<span class="k">for</span> <span class="nx">sc</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">info</span><span class="p">.</span><span class="nx">ReadySCs</span> <span class="p">{</span>
+		<span class="nx">scs</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">scs</span><span class="p">,</span> <span class="nx">sc</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="o">&amp;</span><span class="nx">rrPicker</span><span class="p">{</span>
+		<span class="nx">subConns</span><span class="p">:</span> <span class="nx">scs</span><span class="p">,</span>
+		<span class="c1">// Start at a random index, as the same RR balancer rebuilds a new
+</span><span class="c1"></span>		<span class="c1">// picker when SubConn states change, and we don&#39;t want to apply excess
+</span><span class="c1"></span>		<span class="c1">// load to the first server in the list.
+</span><span class="c1"></span>		<span class="nx">next</span><span class="p">:</span> <span class="nx">grpcrand</span><span class="p">.</span><span class="nf">Intn</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nx">scs</span><span class="p">)</span><span class="p">)</span><span class="p">,</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">type</span> <span class="nx">rrPicker</span> <span class="kd">struct</span> <span class="p">{</span>
+   <span class="c1">// subConns is the snapshot of the roundrobin balancer when this picker was
+</span><span class="c1"></span>   <span class="c1">// created. The slice is immutable. Each Get() will do a round robin
+</span><span class="c1"></span>   <span class="c1">// selection from it and return the selected SubConn.
+</span><span class="c1"></span>   <span class="nx">subConns</span> <span class="p">[</span><span class="p">]</span><span class="nx">balancer</span><span class="p">.</span><span class="nx">SubConn</span>
+
+   <span class="nx">mu</span>   <span class="nx">sync</span><span class="p">.</span><span class="nx">Mutex</span>
+   <span class="nx">next</span> <span class="kt">int</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">p</span> <span class="o">*</span><span class="nx">rrPicker</span><span class="p">)</span> <span class="nf">Pick</span><span class="p">(</span><span class="nx">balancer</span><span class="p">.</span><span class="nx">PickInfo</span><span class="p">)</span> <span class="p">(</span><span class="nx">balancer</span><span class="p">.</span><span class="nx">PickResult</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+   <span class="nx">p</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">(</span><span class="p">)</span>
+   <span class="nx">sc</span> <span class="o">:=</span> <span class="nx">p</span><span class="p">.</span><span class="nx">subConns</span><span class="p">[</span><span class="nx">p</span><span class="p">.</span><span class="nx">next</span><span class="p">]</span>
+   <span class="c1">// 每次选择连接之后都会把 next 加 1，然后对长度取余，实现轮询所有连接
+</span><span class="c1"></span>   <span class="nx">p</span><span class="p">.</span><span class="nx">next</span> <span class="p">=</span> <span class="p">(</span><span class="nx">p</span><span class="p">.</span><span class="nx">next</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="nx">p</span><span class="p">.</span><span class="nx">subConns</span><span class="p">)</span>
+   <span class="nx">p</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">(</span><span class="p">)</span>
+   <span class="k">return</span> <span class="nx">balancer</span><span class="p">.</span><span class="nx">PickResult</span><span class="p">{</span><span class="nx">SubConn</span><span class="p">:</span> <span class="nx">sc</span><span class="p">}</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></div><p>首先，负载均衡器会通过 <code>rrPickerBuilder.Build</code> 方法使用传入的 <code>SubConn</code> 来初始化 <code>rrPicker</code> 实例。当需要进行 RPC 调用时，gRPC 会调用 <code>Pick</code> 方法来获取一条可用连接。在 <code>rrPicker</code> 中，每次调用 Pick 都会把 <code>rrPicker.next</code> 值加1，然后对长度取余，实现轮询所有连接。</p>
+<h2 id="3-总结">3. 总结</h2>
+<p>gRPC 实现的 RoundRobin 非常简洁易懂，如果我们有自己实现负载均衡策略的需求，也可以参考 RoundRobin 的写法来构建自己的负载均衡选择器。比如 go-zero 的 <a href="https://github.com/tal-tech/go-zero/blob/master/zrpc/internal/balancer/p2c/p2c.go">p2c</a> 选择器。</p>
+]]></content>
+		</item>
 		
 		<item>
 			<title>gRPC Balancer 分析</title>

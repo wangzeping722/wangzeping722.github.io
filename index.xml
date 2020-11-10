@@ -7,10 +7,19 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>zh</language>
     <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-    <lastBuildDate>Mon, 09 Nov 2020 14:49:16 +0800</lastBuildDate>
+    <lastBuildDate>Mon, 09 Nov 2020 17:59:31 +0800</lastBuildDate>
     
 	<atom:link href="https://wangzeping722.github.io/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>gRPC RoundRobin Picker 分析</title>
+      <link>https://wangzeping722.github.io/posts/grpc-picker/</link>
+      <pubDate>Mon, 09 Nov 2020 17:59:31 +0800</pubDate>
+      
+      <guid>https://wangzeping722.github.io/posts/grpc-picker/</guid>
+      <description>前言 上一篇文章提到过：Picker 是负载均衡器里面的一个组件，主要作用就是客户端要进行 rpc 调用的时候，在可用的连接中根据负载均衡策略挑选出最时</description>
+    </item>
     
     <item>
       <title>阅读</title>
