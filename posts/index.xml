@@ -955,25 +955,13 @@
 <li>大量微服务治理和并发工具包</li>
 </ul>
 <h2 id="计划">计划</h2>
-<p>go-zero 是一个集大成者，但又不失优雅的微服务框架，我计划在业余时间研究它的源码。我把感兴趣的模块都写在了下面的 TODO列表：</p>
+<p>go-zero 是一个集大成者，但又不失优雅的微服务框架，我计划在业余时间研究它的源码。我把感兴趣的模块都写在了下面的 TODO 列表：</p>
 <ul>
-<li>disResolver&ndash;基于 etcd 实现的服务发现</li>
 <li>Balancer&ndash;基于 p2c 负载均衡</li>
 <li>Bloom 布隆过滤器的实现</li>
 <li>zero 的熔断器</li>
-<li>goctl api 命令的实现</li>
 </ul>
 ]]></content>
-		</item>
-		
-		<item>
-			<title>go-zero Resolver--基于 etcd 实现的服务发现</title>
-			<link>https://wangzeping722.github.io/posts/go-zero-resolver/</link>
-			<pubDate>Fri, 06 Nov 2020 12:56:11 +0800</pubDate>
-			
-			<guid>https://wangzeping722.github.io/posts/go-zero-resolver/</guid>
-			<description></description>
-			<content type="html"><![CDATA[]]></content>
 		</item>
 		
 		<item>

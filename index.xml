@@ -49,15 +49,6 @@
     </item>
     
     <item>
-      <title>go-zero Resolver--基于 etcd 实现的服务发现</title>
-      <link>https://wangzeping722.github.io/posts/go-zero-resolver/</link>
-      <pubDate>Fri, 06 Nov 2020 12:56:11 +0800</pubDate>
-      
-      <guid>https://wangzeping722.github.io/posts/go-zero-resolver/</guid>
-      <description></description>
-    </item>
-    
-    <item>
       <title>gRPC Resolver 分析</title>
       <link>https://wangzeping722.github.io/posts/grpc-resolver/</link>
       <pubDate>Thu, 29 Oct 2020 09:56:05 +0800</pubDate>
