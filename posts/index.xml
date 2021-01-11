@@ -959,7 +959,8 @@
 <ul>
 <li>Balancer&ndash;基于 p2c 负载均衡</li>
 <li>Bloom 布隆过滤器的实现</li>
-<li>zero 的熔断器</li>
+<li>go-zero 的熔断器</li>
+<li>go-zero 的服务注册与发现</li>
 </ul>
 ]]></content>
 		</item>
