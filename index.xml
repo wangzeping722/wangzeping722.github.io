@@ -7,10 +7,19 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>zh</language>
     <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-    <lastBuildDate>Mon, 09 Nov 2020 17:59:31 +0800</lastBuildDate>
+    <lastBuildDate>Mon, 11 Jan 2021 16:30:18 +0800</lastBuildDate>
     
 	<atom:link href="https://wangzeping722.github.io/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>go-zero源码分析： P2C 负载均衡算法</title>
+      <link>https://wangzeping722.github.io/posts/go-zero-balancer-p2c/</link>
+      <pubDate>Mon, 11 Jan 2021 16:30:18 +0800</pubDate>
+      
+      <guid>https://wangzeping722.github.io/posts/go-zero-balancer-p2c/</guid>
+      <description>看完文章基于gRPC的注册发现与负载均衡的原理和实战后大呼过瘾，但是文章中对负载均衡算法—— p2c 算法的介绍不是很详细，于是乎就去学习了一下。 1.</description>
+    </item>
     
     <item>
       <title>gRPC RoundRobin Picker 分析</title>
@@ -46,15 +55,6 @@
       
       <guid>https://wangzeping722.github.io/posts/grpc-resolver/</guid>
       <description>1. 前言 gRPC Resolver 是 gRPC 的核心功能之一，与 gRPC Balancer 一起负责 gRPC 调用其它服务时的负载均衡。gRPC 负载均衡是针对每次请求，而不是连接，这样可以保证服务端负载的</description>
-    </item>
-    
-    <item>
-      <title>go-zero源码分析： P2C 负载均衡算法</title>
-      <link>https://wangzeping722.github.io/posts/go-zero-balancer-p2c/</link>
-      <pubDate>Thu, 02 Jan 2020 16:30:18 +0800</pubDate>
-      
-      <guid>https://wangzeping722.github.io/posts/go-zero-balancer-p2c/</guid>
-      <description>看完文章基于gRPC的注册发现与负载均衡的原理和实战后大呼过瘾，但是文章中对负载均衡算法—— p2c 算法的介绍不是很详细，于是乎就去学习了一下。 1.</description>
     </item>
     
     <item>
