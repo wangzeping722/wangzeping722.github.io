@@ -40,15 +40,6 @@
     </item>
     
     <item>
-      <title>go-zero 源码分析计划</title>
-      <link>https://wangzeping722.github.io/posts/go-zero/</link>
-      <pubDate>Fri, 06 Nov 2020 13:03:49 +0800</pubDate>
-      
-      <guid>https://wangzeping722.github.io/posts/go-zero/</guid>
-      <description>go-zero 是一个集成了各种工程实践的 web 和 rpc 框架。通过弹性设计保障了大并发服务端的稳定性，经受了充分的实战检验。 go-zero 包含极简的 API 定义和生成工具 goctl</description>
-    </item>
-    
-    <item>
       <title>gRPC Resolver 分析</title>
       <link>https://wangzeping722.github.io/posts/grpc-resolver/</link>
       <pubDate>Thu, 29 Oct 2020 09:56:05 +0800</pubDate>
