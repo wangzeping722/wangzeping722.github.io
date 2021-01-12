@@ -49,6 +49,15 @@
     </item>
     
     <item>
+      <title>go-zero源码分析： P2C 负载均衡算法</title>
+      <link>https://wangzeping722.github.io/posts/go-zero-balancer-p2c/</link>
+      <pubDate>Thu, 02 Jan 2020 16:30:18 +0800</pubDate>
+      
+      <guid>https://wangzeping722.github.io/posts/go-zero-balancer-p2c/</guid>
+      <description>看完文章基于gRPC的注册发现与负载均衡的原理和实战后大呼过瘾，但是文章中对负载均衡算法—— p2c 算法的介绍不是很详细，于是乎就去学习了一下。 1.</description>
+    </item>
+    
+    <item>
       <title>DNS学习总结</title>
       <link>https://wangzeping722.github.io/posts/dns-recording/</link>
       <pubDate>Mon, 23 Dec 2019 10:36:05 +0800</pubDate>
