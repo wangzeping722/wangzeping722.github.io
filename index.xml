@@ -7,10 +7,19 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>zh</language>
     <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-    <lastBuildDate>Mon, 11 Jan 2021 16:30:18 +0800</lastBuildDate>
+    <lastBuildDate>Sat, 10 Apr 2021 17:30:17 +0800</lastBuildDate>
     
 	<atom:link href="https://wangzeping722.github.io/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Rust学习——trait</title>
+      <link>https://wangzeping722.github.io/posts/rust-learn-trait/</link>
+      <pubDate>Sat, 10 Apr 2021 17:30:17 +0800</pubDate>
+      
+      <guid>https://wangzeping722.github.io/posts/rust-learn-trait/</guid>
+      <description>trait 是 Rust 的灵魂。从语义上来说，trait 是在行为上对类型的约束，这种约束可以让 trait 有如下四种用法： 接口抽象：接口是对类型行为的统一约束； 泛型约束</description>
+    </item>
     
     <item>
       <title>go-zero源码分析： P2C 负载均衡算法</title>
