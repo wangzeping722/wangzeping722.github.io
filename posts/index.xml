@@ -99,11 +99,11 @@
 <p>利用 trait 的特性，我们也可以用 trait 来给类型加上标签，Rust 提供了 5 个重要的标签 trait，都被定义在标准库 std::maker 模块中。</p>
 <p>它们分别是：</p>
 <ul>
-<li>Sized trait：</li>
-<li>Unsize trait：</li>
-<li>Copy trait：</li>
-<li>Send trait：</li>
-<li>Sync trait：</li>
+<li>Sized trait：用来标识编译期可确定大小的类型。</li>
+<li>Unsize trait：用于标识动态大小类型（DST）。</li>
+<li>Copy trait：用来标识可以安全按位复制其值的类型。</li>
+<li>Send trait：用来标识可以跨线程安全通信的类型。</li>
+<li>Sync trait：用来标识可以在线程间安全共享引用的类型</li>
 </ul>
 ]]></content>
 		</item>
