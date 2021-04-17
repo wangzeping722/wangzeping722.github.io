@@ -7,10 +7,19 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>zh</language>
     <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-    <lastBuildDate>Wed, 14 Apr 2021 18:44:35 +0800</lastBuildDate>
+    <lastBuildDate>Sat, 17 Apr 2021 12:01:11 +0800</lastBuildDate>
     
 	<atom:link href="https://wangzeping722.github.io/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Term Color</title>
+      <link>https://wangzeping722.github.io/posts/term-color/</link>
+      <pubDate>Sat, 17 Apr 2021 12:01:11 +0800</pubDate>
+      
+      <guid>https://wangzeping722.github.io/posts/term-color/</guid>
+      <description>ANSI转义序列（ANSI escape sequences）是一种的标准，用于控制视频文本上的光标位置、颜色和其他选项。在文本中嵌入确定的字节序列，大部</description>
+    </item>
     
     <item>
       <title>Collect</title>
@@ -91,15 +100,6 @@
       
       <guid>https://wangzeping722.github.io/posts/how-to-write-webconsole/</guid>
       <description>1. 调研 前端：了解到有一个非常优秀的开源web终端库： xterm.js , 使用起来也比较简单。 后端：使用 go 语言实现，因为 go 语言拥有许多优秀的开源ssh库，能够</description>
-    </item>
-    
-    <item>
-      <title>About</title>
-      <link>https://wangzeping722.github.io/about/</link>
-      <pubDate>Mon, 18 Nov 2019 10:51:34 +0800</pubDate>
-      
-      <guid>https://wangzeping722.github.io/about/</guid>
-      <description>古人学问无遗力 少壮工夫老始成。 纸上得来终觉浅 绝知此事要躬行。</description>
     </item>
     
   </channel>
